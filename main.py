@@ -290,12 +290,23 @@ class serialPlot:
         real_calibration = data[4]
         imaginary_calibration = data[5]
 
+
         calibration_magnitude = round(math.sqrt((float(real_calibration) ** 2) + (float(imaginary_calibration) ** 2)), 3)
 
-        gain_factor = (1 / 1) / (calibration_magnitude)
+        if calibration_magnitude != 0:
+            gain_factor = (1 / 1) / (calibration_magnitude)
+        else:
+            gain_factor = (1 / 1) / (1)
 
-        magnitude = round(math.sqrt((float(real) ** 2) + (float(imaginary) ** 2)), 3)
-        impedance = round(1 / (gain_factor * magnitude), 3)
+        if real != 0:
+            magnitude = round(math.sqrt((float(real) ** 2) + (float(imaginary) ** 2)), 3)
+            impedance = round(1 / (gain_factor * magnitude), 3)
+        else:
+            magnitude = 1
+            impedance = 1
+
+        phase = 1
+        phase2 = 1
 
         if real > 0 and imaginary > 0:  # positive positive
             phase = round(np.arctan(real / imaginary) * (180 / pi),2)
@@ -825,8 +836,8 @@ def main():
     pltInterval = 50    # Period at which the plot animation updates [ms]
     xmin = 0
     xmax = maxPlotLength
-    ymin = 0
-    ymax = 30000
+    ymin = 25
+    ymax = 40
 
     plt.ion()
 
