@@ -849,12 +849,6 @@ def main():
     ax.set_xlabel("Time")
     ax.set_ylabel("Temperature (C)")
 
-    # ax2 = plt.subplot(322, xlim=(xmin, xmax), ylim=(float(ymin - (ymax - ymin) / 10), float(ymax + (ymax - ymin) / 10)))
-    # ax3 = plt.subplot(323)
-    # ax4 = plt.subplot(324)
-    # ax5 = plt.subplot(325)
-    # ax6 = plt.subplot(326)
-
     ax2 = fig.add_subplot(324)
     ax2.set_title('Nyquist', loc='left')
     ax2.set_xlabel("Resistance (kOhms)")
