@@ -936,7 +936,7 @@ def main():
                     reactances.append(float(reactance))
 
             anchored_text = AnchoredText(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), loc=1)
-            ax2.add_artist(anchored_text)
+            ax6.add_artist(anchored_text)
             ln2.set_data(resistances, reactances)
             # ax2.clear()
             # anchored_text = AnchoredText(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), loc=1)
