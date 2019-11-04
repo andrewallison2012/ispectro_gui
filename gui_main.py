@@ -3,6 +3,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import numpy as np
 from pyqtgraph.Qt import QtCore, QtGui
 import pyqtgraph as pg
+import datetime as dt
 
 
 qtcreator_file  = "ispectro_xml.ui" # Enter file here, this is generated with qt creator or desinger
@@ -14,6 +15,8 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         QtWidgets.QMainWindow.__init__(self)
         Ui_MainWindow.__init__(self)
         self.setupUi(self)
+
+        self.update_status("iSpectro Loaded\nWelcome")
 
         # sets the plots y max
         # self.plot1_graphicsView.setYRange(min=0, max=100)
@@ -30,7 +33,8 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ptr = 0
 
         # print start after clicking start
-        self.start_QPushButton.clicked.connect(self.update_status)
+        self.start_QPushButton.clicked.connect(self.start_sweep)
+        self.stop_QPushButton.clicked.connect(lambda: self.update_status("Sweep Stopped"))
 
         # refresh timer creation
         self.timer = pg.QtCore.QTimer()
@@ -39,9 +43,12 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     # testing
     # print start after clicking start function
-    def update_status(self):
-        start_text = 'Sweep Started'
-        self.bottom_textBrowser.setText(start_text)
+
+    def start_sweep(self):
+        self.update_status("Sweep Started")
+
+    def update_status(self, text):
+        self.bottom_textBrowser.append(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S -- ') +text)
 
     def update_data(self):
         self.data[self.ptr] = np.random.normal()
@@ -52,8 +59,6 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.data[:tmp.shape[0]] = tmp
         self.plot1_graphicsView.plot().setData(self.data[:self.ptr])
 
-        text = self.sweep_count_spinBox.text()
-        self.bottom_textBrowser.setText(text)
 
 
 if __name__ == "__main__":

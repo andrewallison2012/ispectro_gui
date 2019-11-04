@@ -185,7 +185,48 @@
              </widget>
             </item>
             <item row="3" column="1">
-             <widget class="QComboBox" name="gain_resistor_comboBox"/>
+             <widget class="QComboBox" name="gain_resistor_comboBox">
+              <item>
+               <property name="text">
+                <string>R53</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>R54</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>R55</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>R56</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>R44</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>R46</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>R50</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>R52</string>
+               </property>
+              </item>
+             </widget>
             </item>
             <item row="2" column="0">
              <widget class="QLabel" name="label_5">
@@ -195,7 +236,48 @@
              </widget>
             </item>
             <item row="4" column="1">
-             <widget class="QComboBox" name="fbr_comboBox"/>
+             <widget class="QComboBox" name="fbr_comboBox">
+              <item>
+               <property name="text">
+                <string>R1</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>R4</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>R6</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>R7</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>R11</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>R15</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>R17</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>R19</string>
+               </property>
+              </item>
+             </widget>
             </item>
             <item row="1" column="0">
              <widget class="QLabel" name="label_2">
@@ -236,7 +318,42 @@
              <widget class="QComboBox" name="flyby_resistor_comboBox">
               <item>
                <property name="text">
-                <string>R63</string>
+                <string>R67</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>R69</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>R71</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>R73</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>R65</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>R74/R72/C81</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>R70/R68/C79</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>R66/R64/C75</string>
                </property>
               </item>
              </widget>
