@@ -19,13 +19,20 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # self.plot1_graphicsView.setYRange(min=0, max=100)
 
         # sets data for plot
+        self.plot1_graphicsView.setDownsampling(mode='peak')
+        self.plot1_graphicsView.setClipToView(True)
+
+        # empty plot set up
         self.plot1_graphicsView.plot()
+
+        # empty data array setup
         self.data = np.empty(100)
-        self.ptr  = 0
+        self.ptr = 0
 
         # print start after clicking start
         self.start_QPushButton.clicked.connect(self.update_status)
 
+        # refresh timer creation
         self.timer = pg.QtCore.QTimer()
         self.timer.timeout.connect(self.update_data)
         self.timer.start(50)
