@@ -18,7 +18,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.start_QPushButton.clicked.connect(self.update_status)
 
 
-
+    # testing
     # print start after clicking start function
     def update_status(self):
         start_text = 'Sweep Started'
