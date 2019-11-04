@@ -35,7 +35,7 @@ const float MCLK = 16.000*pow(10,6);// AD5933 External Precision Clock Speed 16.
 const float start_freq = 1*pow(10,3);// Set start freq, < 100Khz
 const float incre_freq = 1*pow(10,3);// Set freq increment
 const int incre_num = 99;// Set number of increments,< 511
-char state;
+int state;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -97,73 +97,160 @@ void setup() {
 void loop(){
   //Read state and enter FSM
     if(Serial.available()>0) {
-      state = Serial.read();
+      state = Serial.parseInt();
       //FSM
       switch(state) {
-        case 'A':  //Program Registers
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // AD5933 commands
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        case 59330:
+          runSweep();
+          break;
+
+        case 59331:  //Program Registers
           programReg();
           break;
 
-        case 'B':  //Measure Temperature
+        case 59332:  //Measure Temperature
           measureTemperature();
           break;
 
-        case 'C':
-          runSweep();
-          delay(1000);
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // R/RRC calibration selection
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        case 116080:
+          ADG1608_RC(0); // R73 (1001 1k resistor)
           break;
 
-        case 'D':
-          runCal1(); // R73 (1001 1k resistor)
-          delay(1000);
+        case 116081:
+          ADG1608_RC(1); // R71 (1002 10k resistor)
           break;
 
-        case 'E':
-          runCal2(); // R71 (1002 10k resistor)
-          delay(1000);
+        case 116082:
+          ADG1608_RC(2); // R69 (101 100RO resistor)
           break;
 
-        case 'F':
-          runCal3(); // R69 (101 100RO resistor)
-          delay(1000);
+        case 116083:
+          ADG1608_RC(3); // R67 (751 10k resistor)
           break;
 
-        case 'G':
-          runCal4(); // R67 (751 10k resistor)
-          delay(1000);
+        case 116084:
+          ADG1608_RC(4); // R65 (C65 actually 10nF cap)
           break;
 
-        case 'H':
-          runCal5(); // R65 (C65 actually 10nF cap)
-          delay(1000);
+        case 116085:
+          ADG1608_RC(5);
           break;
 
-        case 'I':
-          runCal6();
-          delay(1000);
+        case 116086:
+          ADG1608_RC(6);
           break;
 
-        case 'J':
-          runCal7();
-          delay(1000);
+        case 116087:
+          ADG1608_RC(7);
           break;
 
-        case 'K':
-          runCal8();
-          delay(1000);
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // IN-AMP gain selection
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        case 216080:
+          ADG1608_GAIN(0);
           break;
 
-        case 'L':
-          onLED();
-          delay(1000);
+        case 216081:
+          ADG1608_GAIN(1);
           break;
 
-        case 'M':
-          on774();
+        case 216082:
+          ADG1608_GAIN(2);
           break;
 
-        case 'N':
-          off774();
+        case 216083:
+          ADG1608_GAIN(3);
+          break;
+
+        case 216084:
+          ADG1608_GAIN(4);
+          break;
+
+        case 216085:
+          ADG1608_GAIN(5);
+          break;
+
+        case 216086:
+          ADG1608_GAIN(6);
+          break;
+
+        case 216087:
+          ADG1608_GAIN(7);
+          break;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // RFB selection
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        case 316080:
+          ADG1608_RFB(0);
+          break;
+
+        case 316081:
+          ADG1608_RFB(1);
+          break;
+
+        case 316082:
+          ADG1608_RFB(2);
+          break;
+
+        case 316083:
+          ADG1608_RFB(3);
+          break;
+
+        case 316084:
+          ADG1608_RFB(4);
+          break;
+
+        case 316085:
+          ADG1608_RFB(5);
+          break;
+
+        case 316086:
+          ADG1608_RFB(6);
+          break;
+
+        case 316087:
+          ADG1608_RFB(7);
+          break;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // Leads or Calibration selection
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        case 7740:
+          ADG774('Z');
+          break;
+
+        case 7741:
+          ADG774('A');
+          break;
+
+        case 7742:
+          ADG774('B');
+          break;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // Front LED indicator state selection
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        case 10:
+          LED(false);
+          break;
+
+        case 11:
+          LED(true);
           break;
 
       /////Programming Device Registers/////
@@ -407,860 +494,6 @@ void runSweep() {
 
   delay(2000);
   allLOW();
-
-}
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//  RUN CAL 1
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-void runCal1() {
-  short re;
-  short img;
-  double freq;
-  double kfreq;
-  double mag;
-  double phase;
-  double phasei;
-  double phasex;
-  double phasey;
-  double gain;
-  double impedance;
-  double sys_phase;
-  int i=0;
-  int gf=1;
-  double x;
-  double y;
-  double z;
-  double t;
-  double ycal;
-  double zcal;
-  programReg();
-
-  // LED
-  digitalWrite(LED_BUILTIN, HIGH); // REAR DATA TRANSFER LED
-  digitalWrite(13, HIGH); // FRONT ORANGE INDICATOR LED
-
-  // AD8130
-  digitalWrite(A10, HIGH); // PD-AD8130 ENABLE CURRENT SOURCE
-
-  // ADG774
-  digitalWrite(A8, LOW); // CAL_EN ADG774 CALIBRATION OR LEAD SELECTION
-  digitalWrite(A9, HIGH); // CAL_IN ADG774 CALIBRATION OR LEAD SELECTION
-
-  // ADG1608-1
-  digitalWrite(30, HIGH); // RESIS_EN ADG1608 R/RC CALIBRATION SELECTION
-  digitalWrite(32, LOW); // RESIS_A0 ADG1608 R/RC CALIBRATION SELECTION
-  digitalWrite(33, LOW); // RESIS_A1 ADG1608 R/RC CALIBRATION SELECTION
-  digitalWrite(34, LOW); // RESIS_A2 ADG1608 R/RC CALIBRATION SELECTION
-
-  // ADG1608-2
-  digitalWrite(43, HIGH); // RG_EN ADG1608 IN-AMP RESISTOR GAIN SELECTION
-  digitalWrite(45, LOW); // RG_A0 ADG1608 IN-AMP RESISTOR GAIN SELECTION
-  digitalWrite(46, LOW); // RG_A1 ADG1608 IN-AMP RESISTOR GAIN SELECTION
-  digitalWrite(47, LOW); // RG_A2 ADG1608 IN-AMP RESISTOR GAIN SELECTION
-
-  // ADG1608-3
-  digitalWrite(22, HIGH); // IN_AMP_EN ADG1608 RFB SELECTION
-  digitalWrite(24, LOW); // IN_AMP_A0 ADG1608 RFB SELECTION
-  digitalWrite(25, LOW); // IN_AMP_A1 ADG1608 RFB SELECTION
-  digitalWrite(26, LOW); // IN_AMP_A2 ADG1608 RFB SELECTION
-
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0xB0); // 1. Standby '10110000' Mask D8-10 of avoid tampering with gains
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x10); // 2. Initialize sweep
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x20); // 3. Start sweep
-
-  while((readData(STATUS_REG) & 0x07) < 4 ) {  // Check that status reg != 4, sweep not complete
-    delay(1000); // delay between measurements
-
-    int flag = readData(STATUS_REG)& 2;
-    if (flag==2) {
-      //digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-
-
-      byte R1 = readData(RE_DATA_R1);
-      byte R2 = readData(RE_DATA_R2);
-      re = (R1 << 8) | R2;
-      R1  = readData(IMG_DATA_R1);
-      R2  = readData(IMG_DATA_R2);
-      img = (R1 << 8) | R2;
-      freq = start_freq + i*incre_freq;
-      freq = freq/1000;
-      // Serial.println(freq)
-      double x = freq * 1.0;
-      double y = (double)re * 1.0;
-      double z = (double)img * 1.0;
-      double t = measureTemperatureDouble();
-      t = (double)t * 1.0;
-      double ycal = 0.0;
-      double zcal = 0.0;
-
-      sendToPC(&x, &y, &z, &t, &ycal, &zcal);
-
-      if((readData(STATUS_REG) & 0x07) < 4 ){ //Increment frequency
-        writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x30);
-        i++;
-        gf++;
-      }
-      //digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
-    }
-  }
-//  writeData(CTRL_REG,0xA0);
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0xA0); //Power down
-
-  delay(2000);
-  allLOW();
-
-}
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//  RUN CAL 2
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-void runCal2() {
-  short re;
-  short img;
-  double freq;
-  double kfreq;
-  double mag;
-  double phase;
-  double phasei;
-  double phasex;
-  double phasey;
-  double gain;
-  double impedance;
-  double sys_phase;
-  int i=0;
-  int gf=1;
-  double x;
-  double y;
-  double z;
-  double t;
-  double ycal;
-  double zcal;
-  programReg();
-
-  // LED
-  digitalWrite(LED_BUILTIN, HIGH); // REAR DATA TRANSFER LED
-  digitalWrite(13, HIGH); // FRONT ORANGE INDICATOR LED
-
-  // AD8130
-  digitalWrite(A10, HIGH); // PD-AD8130 ENABLE CURRENT SOURCE
-
-  // ADG774
-  digitalWrite(A8, LOW); // CAL_EN ADG774 CALIBRATION OR LEAD SELECTION
-  digitalWrite(A9, HIGH); // CAL_IN ADG774 CALIBRATION OR LEAD SELECTION
-
-  // ADG1608-1
-  digitalWrite(30, HIGH); // RESIS_EN ADG1608 R/RC CALIBRATION SELECTION
-  digitalWrite(32, HIGH); // RESIS_A0 ADG1608 R/RC CALIBRATION SELECTION
-  digitalWrite(33, LOW); // RESIS_A1 ADG1608 R/RC CALIBRATION SELECTION
-  digitalWrite(34, LOW); // RESIS_A2 ADG1608 R/RC CALIBRATION SELECTION
-
-  // ADG1608-2
-  digitalWrite(43, HIGH); // RG_EN ADG1608 IN-AMP RESISTOR GAIN SELECTION
-  digitalWrite(45, LOW); // RG_A0 ADG1608 IN-AMP RESISTOR GAIN SELECTION
-  digitalWrite(46, LOW); // RG_A1 ADG1608 IN-AMP RESISTOR GAIN SELECTION
-  digitalWrite(47, LOW); // RG_A2 ADG1608 IN-AMP RESISTOR GAIN SELECTION
-
-  // ADG1608-3
-  digitalWrite(22, HIGH); // IN_AMP_EN ADG1608 RFB SELECTION
-  digitalWrite(24, LOW); // IN_AMP_A0 ADG1608 RFB SELECTION
-  digitalWrite(25, LOW); // IN_AMP_A1 ADG1608 RFB SELECTION
-  digitalWrite(26, LOW); // IN_AMP_A2 ADG1608 RFB SELECTION
-
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0xB0); // 1. Standby '10110000' Mask D8-10 of avoid tampering with gains
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x10); // 2. Initialize sweep
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x20); // 3. Start sweep
-
-  while((readData(STATUS_REG) & 0x07) < 4 ) {  // Check that status reg != 4, sweep not complete
-    delay(1000); // delay between measurements
-
-    int flag = readData(STATUS_REG)& 2;
-    if (flag==2) {
-      //digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-
-
-      byte R1 = readData(RE_DATA_R1);
-      byte R2 = readData(RE_DATA_R2);
-      re = (R1 << 8) | R2;
-      R1  = readData(IMG_DATA_R1);
-      R2  = readData(IMG_DATA_R2);
-      img = (R1 << 8) | R2;
-      freq = start_freq + i*incre_freq;
-      freq = freq/1000;
-      // Serial.println(freq)
-      double x = freq * 1.0;
-      double y = (double)re * 1.0;
-      double z = (double)img * 1.0;
-      double t = measureTemperatureDouble();
-      t = (double)t * 1.0;
-      double ycal = 0.0;
-      double zcal = 0.0;
-
-      sendToPC(&x, &y, &z, &t, &ycal, &zcal);
-
-      if((readData(STATUS_REG) & 0x07) < 4 ){ //Increment frequency
-        writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x30);
-        i++;
-        gf++;
-      }
-      //digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
-    }
-  }
-//  writeData(CTRL_REG,0xA0);
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0xA0); //Power down
-
-  delay(2000);
-  allLOW();
-
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//  RUN CAL 3
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-void runCal3() {
-  short re;
-  short img;
-  double freq;
-  double kfreq;
-  double mag;
-  double phase;
-  double phasei;
-  double phasex;
-  double phasey;
-  double gain;
-  double impedance;
-  double sys_phase;
-  int i=0;
-  int gf=1;
-  double x;
-  double y;
-  double z;
-  double t;
-  double ycal;
-  double zcal;
-  programReg();
-
-  // LED
-  digitalWrite(LED_BUILTIN, HIGH); // REAR DATA TRANSFER LED
-  digitalWrite(13, HIGH); // FRONT ORANGE INDICATOR LED
-
-  // AD8130
-  digitalWrite(A10, HIGH); // PD-AD8130 ENABLE CURRENT SOURCE
-
-  // ADG774
-  digitalWrite(A8, LOW); // CAL_EN ADG774 CALIBRATION OR LEAD SELECTION
-  digitalWrite(A9, HIGH); // CAL_IN ADG774 CALIBRATION OR LEAD SELECTION
-
-  // ADG1608-1
-  digitalWrite(30, HIGH); // RESIS_EN ADG1608 R/RC CALIBRATION SELECTION
-  digitalWrite(32, LOW); // RESIS_A0 ADG1608 R/RC CALIBRATION SELECTION
-  digitalWrite(33, HIGH); // RESIS_A1 ADG1608 R/RC CALIBRATION SELECTION
-  digitalWrite(34, LOW); // RESIS_A2 ADG1608 R/RC CALIBRATION SELECTION
-
-  // ADG1608-2
-  digitalWrite(43, HIGH); // RG_EN ADG1608 IN-AMP RESISTOR GAIN SELECTION
-  digitalWrite(45, LOW); // RG_A0 ADG1608 IN-AMP RESISTOR GAIN SELECTION
-  digitalWrite(46, LOW); // RG_A1 ADG1608 IN-AMP RESISTOR GAIN SELECTION
-  digitalWrite(47, LOW); // RG_A2 ADG1608 IN-AMP RESISTOR GAIN SELECTION
-
-  // ADG1608-3
-  digitalWrite(22, HIGH); // IN_AMP_EN ADG1608 RFB SELECTION
-  digitalWrite(24, LOW); // IN_AMP_A0 ADG1608 RFB SELECTION
-  digitalWrite(25, LOW); // IN_AMP_A1 ADG1608 RFB SELECTION
-  digitalWrite(26, LOW); // IN_AMP_A2 ADG1608 RFB SELECTION
-
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0xB0); // 1. Standby '10110000' Mask D8-10 of avoid tampering with gains
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x10); // 2. Initialize sweep
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x20); // 3. Start sweep
-
-  while((readData(STATUS_REG) & 0x07) < 4 ) {  // Check that status reg != 4, sweep not complete
-    delay(1000); // delay between measurements
-
-    int flag = readData(STATUS_REG)& 2;
-    if (flag==2) {
-      //digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-
-
-      byte R1 = readData(RE_DATA_R1);
-      byte R2 = readData(RE_DATA_R2);
-      re = (R1 << 8) | R2;
-      R1  = readData(IMG_DATA_R1);
-      R2  = readData(IMG_DATA_R2);
-      img = (R1 << 8) | R2;
-      freq = start_freq + i*incre_freq;
-      freq = freq/1000;
-      // Serial.println(freq)
-      double x = freq * 1.0;
-      double y = (double)re * 1.0;
-      double z = (double)img * 1.0;
-      double t = measureTemperatureDouble();
-      t = (double)t * 1.0;
-      double ycal = 0.0;
-      double zcal = 0.0;
-
-      sendToPC(&x, &y, &z, &t, &ycal, &zcal);
-
-      if((readData(STATUS_REG) & 0x07) < 4 ){ //Increment frequency
-        writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x30);
-        i++;
-        gf++;
-      }
-      //digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
-    }
-  }
-//  writeData(CTRL_REG,0xA0);
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0xA0); //Power down
-
-  delay(2000);
-  allLOW();
-
-
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//  RUN CAL 4
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-void runCal4() {
-  short re;
-  short img;
-  double freq;
-  double kfreq;
-  double mag;
-  double phase;
-  double phasei;
-  double phasex;
-  double phasey;
-  double gain;
-  double impedance;
-  double sys_phase;
-  int i=0;
-  int gf=1;
-  double x;
-  double y;
-  double z;
-  double t;
-  double ycal;
-  double zcal;
-  programReg();
-
-  // LED
-  digitalWrite(LED_BUILTIN, HIGH); // REAR DATA TRANSFER LED
-  digitalWrite(13, HIGH); // FRONT ORANGE INDICATOR LED
-
-  // AD8130
-  digitalWrite(A10, HIGH); // PD-AD8130 ENABLE CURRENT SOURCE
-
-  // ADG774
-  digitalWrite(A8, LOW); // CAL_EN ADG774 CALIBRATION OR LEAD SELECTION
-  digitalWrite(A9, HIGH); // CAL_IN ADG774 CALIBRATION OR LEAD SELECTION
-
-  // ADG1608-1
-  digitalWrite(30, HIGH); // RESIS_EN ADG1608 R/RC CALIBRATION SELECTION
-  digitalWrite(32, HIGH); // RESIS_A0 ADG1608 R/RC CALIBRATION SELECTION
-  digitalWrite(33, HIGH); // RESIS_A1 ADG1608 R/RC CALIBRATION SELECTION
-  digitalWrite(34, LOW); // RESIS_A2 ADG1608 R/RC CALIBRATION SELECTION
-
-  // ADG1608-2
-  digitalWrite(43, HIGH); // RG_EN ADG1608 IN-AMP RESISTOR GAIN SELECTION
-  digitalWrite(45, LOW); // RG_A0 ADG1608 IN-AMP RESISTOR GAIN SELECTION
-  digitalWrite(46, LOW); // RG_A1 ADG1608 IN-AMP RESISTOR GAIN SELECTION
-  digitalWrite(47, LOW); // RG_A2 ADG1608 IN-AMP RESISTOR GAIN SELECTION
-
-  // ADG1608-3
-  digitalWrite(22, HIGH); // IN_AMP_EN ADG1608 RFB SELECTION
-  digitalWrite(24, LOW); // IN_AMP_A0 ADG1608 RFB SELECTION
-  digitalWrite(25, LOW); // IN_AMP_A1 ADG1608 RFB SELECTION
-  digitalWrite(26, LOW); // IN_AMP_A2 ADG1608 RFB SELECTION
-
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0xB0); // 1. Standby '10110000' Mask D8-10 of avoid tampering with gains
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x10); // 2. Initialize sweep
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x20); // 3. Start sweep
-
-  while((readData(STATUS_REG) & 0x07) < 4 ) {  // Check that status reg != 4, sweep not complete
-    delay(1000); // delay between measurements
-
-    int flag = readData(STATUS_REG)& 2;
-    if (flag==2) {
-      //digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-
-
-      byte R1 = readData(RE_DATA_R1);
-      byte R2 = readData(RE_DATA_R2);
-      re = (R1 << 8) | R2;
-      R1  = readData(IMG_DATA_R1);
-      R2  = readData(IMG_DATA_R2);
-      img = (R1 << 8) | R2;
-      freq = start_freq + i*incre_freq;
-      freq = freq/1000;
-      // Serial.println(freq)
-      double x = freq * 1.0;
-      double y = (double)re * 1.0;
-      double z = (double)img * 1.0;
-      double t = measureTemperatureDouble();
-      t = (double)t * 1.0;
-      double ycal = 0.0;
-      double zcal = 0.0;
-
-      sendToPC(&x, &y, &z, &t, &ycal, &zcal);
-
-      if((readData(STATUS_REG) & 0x07) < 4 ){ //Increment frequency
-        writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x30);
-        i++;
-        gf++;
-      }
-      //digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
-    }
-  }
-//  writeData(CTRL_REG,0xA0);
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0xA0); //Power down
-
-  delay(2000);
-  allLOW();
-
-
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//  RUN CAL 5
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-void runCal5() {
-  short re;
-  short img;
-  double freq;
-  double kfreq;
-  double mag;
-  double phase;
-  double phasei;
-  double phasex;
-  double phasey;
-  double gain;
-  double impedance;
-  double sys_phase;
-  int i=0;
-  int gf=1;
-  double x;
-  double y;
-  double z;
-  double t;
-  double ycal;
-  double zcal;
-  programReg();
-
-  // LED
-  digitalWrite(LED_BUILTIN, HIGH); // REAR DATA TRANSFER LED
-  digitalWrite(13, HIGH); // FRONT ORANGE INDICATOR LED
-
-  // AD8130
-  digitalWrite(A10, HIGH); // PD-AD8130 ENABLE CURRENT SOURCE
-
-  // ADG774
-  digitalWrite(A8, LOW); // CAL_EN ADG774 CALIBRATION OR LEAD SELECTION
-  digitalWrite(A9, HIGH); // CAL_IN ADG774 CALIBRATION OR LEAD SELECTION
-
-  // ADG1608-1
-  digitalWrite(30, HIGH); // RESIS_EN ADG1608 R/RC CALIBRATION SELECTION
-  digitalWrite(32, LOW); // RESIS_A0 ADG1608 R/RC CALIBRATION SELECTION
-  digitalWrite(33, LOW); // RESIS_A1 ADG1608 R/RC CALIBRATION SELECTION
-  digitalWrite(34, HIGH); // RESIS_A2 ADG1608 R/RC CALIBRATION SELECTION
-
-  // ADG1608-2
-  digitalWrite(43, HIGH); // RG_EN ADG1608 IN-AMP RESISTOR GAIN SELECTION
-  digitalWrite(45, LOW); // RG_A0 ADG1608 IN-AMP RESISTOR GAIN SELECTION
-  digitalWrite(46, LOW); // RG_A1 ADG1608 IN-AMP RESISTOR GAIN SELECTION
-  digitalWrite(47, LOW); // RG_A2 ADG1608 IN-AMP RESISTOR GAIN SELECTION
-
-  // ADG1608-3
-  digitalWrite(22, HIGH); // IN_AMP_EN ADG1608 RFB SELECTION
-  digitalWrite(24, LOW); // IN_AMP_A0 ADG1608 RFB SELECTION
-  digitalWrite(25, LOW); // IN_AMP_A1 ADG1608 RFB SELECTION
-  digitalWrite(26, LOW); // IN_AMP_A2 ADG1608 RFB SELECTION
-
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0xB0); // 1. Standby '10110000' Mask D8-10 of avoid tampering with gains
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x10); // 2. Initialize sweep
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x20); // 3. Start sweep
-
-  while((readData(STATUS_REG) & 0x07) < 4 ) {  // Check that status reg != 4, sweep not complete
-    delay(1000); // delay between measurements
-
-    int flag = readData(STATUS_REG)& 2;
-    if (flag==2) {
-      //digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-
-
-      byte R1 = readData(RE_DATA_R1);
-      byte R2 = readData(RE_DATA_R2);
-      re = (R1 << 8) | R2;
-      R1  = readData(IMG_DATA_R1);
-      R2  = readData(IMG_DATA_R2);
-      img = (R1 << 8) | R2;
-      freq = start_freq + i*incre_freq;
-      freq = freq/1000;
-      // Serial.println(freq)
-      double x = freq * 1.0;
-      double y = (double)re * 1.0;
-      double z = (double)img * 1.0;
-      double t = measureTemperatureDouble();
-      t = (double)t * 1.0;
-      double ycal = 0.0;
-      double zcal = 0.0;
-
-      sendToPC(&x, &y, &z, &t, &ycal, &zcal);
-
-      if((readData(STATUS_REG) & 0x07) < 4 ){ //Increment frequency
-        writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x30);
-        i++;
-        gf++;
-      }
-      //digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
-    }
-  }
-//  writeData(CTRL_REG,0xA0);
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0xA0); //Power down
-
-  delay(2000);
-  allLOW();
-
-
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//  RUN CAL 6
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-void runCal6() {
-  short re;
-  short img;
-  double freq;
-  double kfreq;
-  double mag;
-  double phase;
-  double phasei;
-  double phasex;
-  double phasey;
-  double gain;
-  double impedance;
-  double sys_phase;
-  int i=0;
-  int gf=1;
-  double x;
-  double y;
-  double z;
-  double t;
-  double ycal;
-  double zcal;
-  programReg();
-
-  // LED
-  digitalWrite(LED_BUILTIN, HIGH); // REAR DATA TRANSFER LED
-  digitalWrite(13, HIGH); // FRONT ORANGE INDICATOR LED
-
-  // AD8130
-  digitalWrite(A10, HIGH); // PD-AD8130 ENABLE CURRENT SOURCE
-
-  // ADG774
-  digitalWrite(A8, LOW); // CAL_EN ADG774 CALIBRATION OR LEAD SELECTION
-  digitalWrite(A9, HIGH); // CAL_IN ADG774 CALIBRATION OR LEAD SELECTION
-
-  // ADG1608-1
-  digitalWrite(30, HIGH); // RESIS_EN ADG1608 R/RC CALIBRATION SELECTION
-  digitalWrite(32, HIGH); // RESIS_A0 ADG1608 R/RC CALIBRATION SELECTION
-  digitalWrite(33, LOW); // RESIS_A1 ADG1608 R/RC CALIBRATION SELECTION
-  digitalWrite(34, HIGH); // RESIS_A2 ADG1608 R/RC CALIBRATION SELECTION
-
-  // ADG1608-2
-  digitalWrite(43, HIGH); // RG_EN ADG1608 IN-AMP RESISTOR GAIN SELECTION
-  digitalWrite(45, LOW); // RG_A0 ADG1608 IN-AMP RESISTOR GAIN SELECTION
-  digitalWrite(46, LOW); // RG_A1 ADG1608 IN-AMP RESISTOR GAIN SELECTION
-  digitalWrite(47, LOW); // RG_A2 ADG1608 IN-AMP RESISTOR GAIN SELECTION
-
-  // ADG1608-3
-  digitalWrite(22, HIGH); // IN_AMP_EN ADG1608 RFB SELECTION
-  digitalWrite(24, LOW); // IN_AMP_A0 ADG1608 RFB SELECTION
-  digitalWrite(25, LOW); // IN_AMP_A1 ADG1608 RFB SELECTION
-  digitalWrite(26, LOW); // IN_AMP_A2 ADG1608 RFB SELECTION
-
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0xB0); // 1. Standby '10110000' Mask D8-10 of avoid tampering with gains
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x10); // 2. Initialize sweep
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x20); // 3. Start sweep
-
-  while((readData(STATUS_REG) & 0x07) < 4 ) {  // Check that status reg != 4, sweep not complete
-    delay(1000); // delay between measurements
-
-    int flag = readData(STATUS_REG)& 2;
-    if (flag==2) {
-      //digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-
-
-      byte R1 = readData(RE_DATA_R1);
-      byte R2 = readData(RE_DATA_R2);
-      re = (R1 << 8) | R2;
-      R1  = readData(IMG_DATA_R1);
-      R2  = readData(IMG_DATA_R2);
-      img = (R1 << 8) | R2;
-      freq = start_freq + i*incre_freq;
-      freq = freq/1000;
-      // Serial.println(freq)
-      double x = freq * 1.0;
-      double y = (double)re * 1.0;
-      double z = (double)img * 1.0;
-      double t = measureTemperatureDouble();
-      t = (double)t * 1.0;
-      double ycal = 0.0;
-      double zcal = 0.0;
-
-      sendToPC(&x, &y, &z, &t, &ycal, &zcal);
-
-      if((readData(STATUS_REG) & 0x07) < 4 ){ //Increment frequency
-        writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x30);
-        i++;
-        gf++;
-      }
-      //digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
-    }
-  }
-//  writeData(CTRL_REG,0xA0);
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0xA0); //Power down
-
-  delay(2000);
-  allLOW();
-
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//  RUN CAL 7
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-void runCal7() {
-  short re;
-  short img;
-  double freq;
-  double kfreq;
-  double mag;
-  double phase;
-  double phasei;
-  double phasex;
-  double phasey;
-  double gain;
-  double impedance;
-  double sys_phase;
-  int i=0;
-  int gf=1;
-  double x;
-  double y;
-  double z;
-  double t;
-  double ycal;
-  double zcal;
-  programReg();
-
-  // LED
-  digitalWrite(LED_BUILTIN, HIGH); // REAR DATA TRANSFER LED
-  digitalWrite(13, HIGH); // FRONT ORANGE INDICATOR LED
-
-  // AD8130
-  digitalWrite(A10, HIGH); // PD-AD8130 ENABLE CURRENT SOURCE
-
-  // ADG774
-  digitalWrite(A8, LOW); // CAL_EN ADG774 CALIBRATION OR LEAD SELECTION
-  digitalWrite(A9, HIGH); // CAL_IN ADG774 CALIBRATION OR LEAD SELECTION
-
-  // ADG1608-1
-  digitalWrite(30, HIGH); // RESIS_EN ADG1608 R/RC CALIBRATION SELECTION
-  digitalWrite(32, LOW); // RESIS_A0 ADG1608 R/RC CALIBRATION SELECTION
-  digitalWrite(33, HIGH); // RESIS_A1 ADG1608 R/RC CALIBRATION SELECTION
-  digitalWrite(34, HIGH); // RESIS_A2 ADG1608 R/RC CALIBRATION SELECTION
-
-  // ADG1608-2
-  digitalWrite(43, HIGH); // RG_EN ADG1608 IN-AMP RESISTOR GAIN SELECTION
-  digitalWrite(45, LOW); // RG_A0 ADG1608 IN-AMP RESISTOR GAIN SELECTION
-  digitalWrite(46, LOW); // RG_A1 ADG1608 IN-AMP RESISTOR GAIN SELECTION
-  digitalWrite(47, LOW); // RG_A2 ADG1608 IN-AMP RESISTOR GAIN SELECTION
-
-  // ADG1608-3
-  digitalWrite(22, HIGH); // IN_AMP_EN ADG1608 RFB SELECTION
-  digitalWrite(24, LOW); // IN_AMP_A0 ADG1608 RFB SELECTION
-  digitalWrite(25, LOW); // IN_AMP_A1 ADG1608 RFB SELECTION
-  digitalWrite(26, LOW); // IN_AMP_A2 ADG1608 RFB SELECTION
-
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0xB0); // 1. Standby '10110000' Mask D8-10 of avoid tampering with gains
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x10); // 2. Initialize sweep
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x20); // 3. Start sweep
-
-  while((readData(STATUS_REG) & 0x07) < 4 ) {  // Check that status reg != 4, sweep not complete
-    delay(1000); // delay between measurements
-
-    int flag = readData(STATUS_REG)& 2;
-    if (flag==2) {
-      //digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-
-
-      byte R1 = readData(RE_DATA_R1);
-      byte R2 = readData(RE_DATA_R2);
-      re = (R1 << 8) | R2;
-      R1  = readData(IMG_DATA_R1);
-      R2  = readData(IMG_DATA_R2);
-      img = (R1 << 8) | R2;
-      freq = start_freq + i*incre_freq;
-      freq = freq/1000;
-      // Serial.println(freq)
-      double x = freq * 1.0;
-      double y = (double)re * 1.0;
-      double z = (double)img * 1.0;
-      double t = measureTemperatureDouble();
-      t = (double)t * 1.0;
-      double ycal = 0.0;
-      double zcal = 0.0;
-
-      sendToPC(&x, &y, &z, &t, &ycal, &zcal);
-
-      if((readData(STATUS_REG) & 0x07) < 4 ){ //Increment frequency
-        writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x30);
-        i++;
-        gf++;
-      }
-      //digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
-    }
-  }
-//  writeData(CTRL_REG,0xA0);
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0xA0); //Power down
-
-  delay(2000);
-  allLOW();
-
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//  RUN CAL 8
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-void runCal8() {
-  short re;
-  short img;
-  double freq;
-  double kfreq;
-  double mag;
-  double phase;
-  double phasei;
-  double phasex;
-  double phasey;
-  double gain;
-  double impedance;
-  double sys_phase;
-  int i=0;
-  int gf=1;
-  double x;
-  double y;
-  double z;
-  double t;
-  double ycal;
-  double zcal;
-  programReg();
-
-  // LED
-  digitalWrite(LED_BUILTIN, HIGH); // REAR DATA TRANSFER LED
-  digitalWrite(13, HIGH); // FRONT ORANGE INDICATOR LED
-
-  // AD8130
-  digitalWrite(A10, HIGH); // PD-AD8130 ENABLE CURRENT SOURCE
-
-  // ADG774
-  digitalWrite(A8, LOW); // CAL_EN ADG774 CALIBRATION OR LEAD SELECTION
-  digitalWrite(A9, HIGH); // CAL_IN ADG774 CALIBRATION OR LEAD SELECTION
-
-  // ADG1608-1
-  digitalWrite(30, HIGH); // RESIS_EN ADG1608 R/RC CALIBRATION SELECTION
-  digitalWrite(32, HIGH); // RESIS_A0 ADG1608 R/RC CALIBRATION SELECTION
-  digitalWrite(33, HIGH); // RESIS_A1 ADG1608 R/RC CALIBRATION SELECTION
-  digitalWrite(34, HIGH); // RESIS_A2 ADG1608 R/RC CALIBRATION SELECTION
-
-  // ADG1608-2
-  digitalWrite(43, HIGH); // RG_EN ADG1608 IN-AMP RESISTOR GAIN SELECTION
-  digitalWrite(45, LOW); // RG_A0 ADG1608 IN-AMP RESISTOR GAIN SELECTION
-  digitalWrite(46, LOW); // RG_A1 ADG1608 IN-AMP RESISTOR GAIN SELECTION
-  digitalWrite(47, LOW); // RG_A2 ADG1608 IN-AMP RESISTOR GAIN SELECTION
-
-  // ADG1608-3
-  digitalWrite(22, HIGH); // IN_AMP_EN ADG1608 RFB SELECTION
-  digitalWrite(24, LOW); // IN_AMP_A0 ADG1608 RFB SELECTION
-  digitalWrite(25, LOW); // IN_AMP_A1 ADG1608 RFB SELECTION
-  digitalWrite(26, LOW); // IN_AMP_A2 ADG1608 RFB SELECTION
-
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0xB0); // 1. Standby '10110000' Mask D8-10 of avoid tampering with gains
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x10); // 2. Initialize sweep
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x20); // 3. Start sweep
-
-  while((readData(STATUS_REG) & 0x07) < 4 ) {  // Check that status reg != 4, sweep not complete
-    delay(1000); // delay between measurements
-
-    int flag = readData(STATUS_REG)& 2;
-    if (flag==2) {
-      //digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-
-
-      byte R1 = readData(RE_DATA_R1);
-      byte R2 = readData(RE_DATA_R2);
-      re = (R1 << 8) | R2;
-      R1  = readData(IMG_DATA_R1);
-      R2  = readData(IMG_DATA_R2);
-      img = (R1 << 8) | R2;
-      freq = start_freq + i*incre_freq;
-      freq = freq/1000;
-      // Serial.println(freq)
-      double x = freq * 1.0;
-      double y = (double)re * 1.0;
-      double z = (double)img * 1.0;
-      double t = measureTemperatureDouble();
-      t = (double)t * 1.0;
-      double ycal = 0.0;
-      double zcal = 0.0;
-
-      sendToPC(&x, &y, &z, &t, &ycal, &zcal);
-
-      if((readData(STATUS_REG) & 0x07) < 4 ){ //Increment frequency
-        writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x30);
-        i++;
-        gf++;
-      }
-      //digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
-    }
-  }
-//  writeData(CTRL_REG,0xA0);
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0xA0); //Power down
-
-  delay(2000);
-  allLOW();
-
 
 }
 

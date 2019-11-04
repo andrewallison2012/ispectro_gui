@@ -4,6 +4,7 @@ import numpy as np
 from pyqtgraph.Qt import QtCore, QtGui
 import pyqtgraph as pg
 import datetime as dt
+import serial_port_module as spm
 
 
 qtcreator_file  = "ispectro_xml.ui" # Enter file here, this is generated with qt creator or desinger
@@ -41,8 +42,14 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.timer.timeout.connect(self.update_data)
         self.timer.start(50)
 
+        self.connect_pushButton.clicked.connect(self.connect)
+
     # testing
     # print start after clicking start function
+
+    def connect(self):
+        text = spm.connect_to_arduino().port
+        self.update_status('connected to:  '+ text)
 
     def start_sweep(self):
         self.update_status("Sweep Started")
