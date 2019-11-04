@@ -30,7 +30,7 @@
     <item row="1" column="0">
      <layout class="QGridLayout" name="gridLayout_4">
       <item row="3" column="0" alignment="Qt::AlignTop">
-       <widget class="QPushButton" name="pushButton_stop">
+       <widget class="QPushButton" name="stop_QPushButton">
         <property name="maximumSize">
          <size>
           <width>1000</width>
@@ -66,7 +66,7 @@
             <item>
              <layout class="QGridLayout" name="gridLayout_5">
               <item row="4" column="1">
-               <widget class="QSpinBox" name="spinBox_5">
+               <widget class="QSpinBox" name="settling_time_spinBox">
                 <property name="suffix">
                  <string> sec.</string>
                 </property>
@@ -79,7 +79,7 @@
                </widget>
               </item>
               <item row="2" column="1">
-               <widget class="QSpinBox" name="spinBox_3">
+               <widget class="QSpinBox" name="step_size_spinBox">
                 <property name="suffix">
                  <string> kHz</string>
                 </property>
@@ -92,9 +92,12 @@
                </widget>
               </item>
               <item row="1" column="1">
-               <widget class="QSpinBox" name="spinBox_2">
+               <widget class="QSpinBox" name="end_freq_spinBox">
                 <property name="suffix">
                  <string> kHz</string>
+                </property>
+                <property name="prefix">
+                 <string/>
                 </property>
                 <property name="minimum">
                  <number>1</number>
@@ -103,12 +106,12 @@
                  <number>500</number>
                 </property>
                 <property name="value">
-                 <number>500</number>
+                 <number>300</number>
                 </property>
                </widget>
               </item>
               <item row="3" column="1">
-               <widget class="QSpinBox" name="spinBox_4">
+               <widget class="QSpinBox" name="number_of_steps_spinBox_4">
                 <property name="minimum">
                  <number>1</number>
                 </property>
@@ -121,7 +124,7 @@
                </widget>
               </item>
               <item row="0" column="1">
-               <widget class="QSpinBox" name="spinBox">
+               <widget class="QSpinBox" name="start_freq_spinBox">
                 <property name="suffix">
                  <string> kHz</string>
                 </property>
@@ -182,7 +185,7 @@
              </widget>
             </item>
             <item row="3" column="1">
-             <widget class="QComboBox" name="comboBox_4"/>
+             <widget class="QComboBox" name="gain_resistor_comboBox"/>
             </item>
             <item row="2" column="0">
              <widget class="QLabel" name="label_5">
@@ -192,7 +195,7 @@
              </widget>
             </item>
             <item row="4" column="1">
-             <widget class="QComboBox" name="comboBox_3"/>
+             <widget class="QComboBox" name="fbr_comboBox"/>
             </item>
             <item row="1" column="0">
              <widget class="QLabel" name="label_2">
@@ -202,14 +205,14 @@
              </widget>
             </item>
             <item row="0" column="1">
-             <widget class="QSpinBox" name="spinBox_6">
+             <widget class="QSpinBox" name="sweep_count_spinBox">
               <property name="value">
                <number>1</number>
               </property>
              </widget>
             </item>
             <item row="1" column="1">
-             <widget class="QComboBox" name="comboBox_2">
+             <widget class="QComboBox" name="flyby_calibration_comboBox">
               <item>
                <property name="text">
                 <string>ON</string>
@@ -230,7 +233,7 @@
              </widget>
             </item>
             <item row="2" column="1">
-             <widget class="QComboBox" name="comboBox">
+             <widget class="QComboBox" name="flyby_resistor_comboBox">
               <item>
                <property name="text">
                 <string>R63</string>
@@ -253,7 +256,7 @@
              </widget>
             </item>
             <item row="5" column="1">
-             <widget class="QComboBox" name="comboBox_5">
+             <widget class="QComboBox" name="pga_comboBox">
               <item>
                <property name="text">
                 <string>1x</string>
@@ -269,7 +272,7 @@
            </layout>
           </item>
           <item row="0" column="1">
-           <widget class="QPushButton" name="pushButton">
+           <widget class="QPushButton" name="apply_settings_QPushButton">
             <property name="text">
              <string>Apply Settings</string>
             </property>
@@ -285,7 +288,7 @@
              </widget>
             </item>
             <item row="0" column="1">
-             <widget class="QLineEdit" name="lineEdit"/>
+             <widget class="QLineEdit" name="subject_id_lineEdit"/>
             </item>
             <item row="1" column="0">
              <widget class="QLabel" name="label_13">
@@ -295,7 +298,11 @@
              </widget>
             </item>
             <item row="1" column="1">
-             <widget class="QLineEdit" name="lineEdit_2"/>
+             <widget class="QDoubleSpinBox" name="electode_dist_doubleSpinBox">
+              <property name="suffix">
+               <string> cm</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>
@@ -423,7 +430,7 @@
            </layout>
           </item>
           <item row="0" column="0">
-           <widget class="QPushButton" name="pushButton_2">
+           <widget class="QPushButton" name="run_regression_QPushButton">
             <property name="text">
              <string>Run Regression</string>
             </property>
@@ -434,7 +441,7 @@
        </widget>
       </item>
       <item row="1" column="0">
-       <widget class="QPushButton" name="pushButton_start">
+       <widget class="QPushButton" name="start_QPushButton">
         <property name="maximumSize">
          <size>
           <width>1000</width>
@@ -467,7 +474,7 @@
     <item row="1" column="3">
      <layout class="QGridLayout" name="gridLayout">
       <item row="1" column="0">
-       <widget class="PlotWidget" name="graphicsView">
+       <widget class="PlotWidget" name="plot1_graphicsView">
         <property name="minimumSize">
          <size>
           <width>800</width>
@@ -477,7 +484,7 @@
        </widget>
       </item>
       <item row="2" column="0">
-       <widget class="QTextBrowser" name="textBrowser">
+       <widget class="QTextBrowser" name="bottom_textBrowser">
         <property name="maximumSize">
          <size>
           <width>16777215</width>
@@ -536,9 +543,9 @@
  <resources/>
  <connections>
   <connection>
-   <sender>pushButton_start</sender>
+   <sender>start_QPushButton</sender>
    <signal>objectNameChanged(QString)</signal>
-   <receiver>textBrowser</receiver>
+   <receiver>bottom_textBrowser</receiver>
    <slot>insertPlainText(QString)</slot>
    <hints>
     <hint type="sourcelabel">

@@ -1,5 +1,7 @@
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
+import numpy as np
+import pyqtgraph as pg
 
 
 qtcreator_file  = "ispectro_xml.ui" # Enter file here, this is generated with qt creator or desinger
@@ -11,6 +13,16 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         QtWidgets.QMainWindow.__init__(self)
         Ui_MainWindow.__init__(self)
         self.setupUi(self)
+
+        # print start after clicking start
+        self.start_QPushButton.clicked.connect(self.update_status)
+
+
+
+    # print start after clicking start function
+    def update_status(self):
+        start_text = 'Sweep Started'
+        self.bottom_textBrowser.setText(start_text)
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
