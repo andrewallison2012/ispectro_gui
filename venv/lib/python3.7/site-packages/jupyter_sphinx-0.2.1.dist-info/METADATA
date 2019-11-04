@@ -1,0 +1,22 @@
+Metadata-Version: 2.1
+Name: jupyter-sphinx
+Version: 0.2.1
+Summary: Jupyter Sphinx Extensions
+Home-page: https://github.com/jupyter/jupyter-sphinx/
+Author: Jupyter Development Team
+Author-email: jupyter@googlegroups.com
+License: BSD
+Project-URL: Bug Tracker, https://github.com/jupyter/jupyter-sphinx/issues/
+Project-URL: Documentation, https://jupyter-sphinx.readthedocs.io
+Project-URL: Source Code, https://github.com/jupyter/jupyter-sphinx/
+Platform: UNKNOWN
+Requires-Python: >= 3.5
+Requires-Dist: Sphinx (>=1.8)
+Requires-Dist: ipywidgets (>=7.0.0)
+Requires-Dist: IPython
+Requires-Dist: nbconvert (>=5.5)
+Requires-Dist: nbformat
+
+UNKNOWN
+
+
