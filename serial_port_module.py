@@ -62,17 +62,11 @@ class connect_to_arduino:
 
         self.raw_data = bytearray(self.datum_per_serial_line * self.bytes_per_datum) # constructs a byte array object
         self.connection.readinto(self.raw_data) # reads serial data into byte array object
-
-        # self.data_copy = copy.deepcopy(self.raw_data[:]) # copies byte array object after it is read into
-        # for i in range(self.datum_per_serial_line):
-        #     data = self.data_copy[(i*self.bytes_per_datum):(self.bytes_per_datum + (i * self.bytes_per_datum))] # parses/interates through byte array object data in serial data 0 1 2 3 4 5 each 4 bytes long
-        #     value, = struct.unpack('f', data) # saves data in byte to value
-        #     self.data[i].append(value) # adds the value to the line
-
-        self.raw_data = bytearray(self.datum_per_serial_line * self.bytes_per_datum) # constructs a byte array object
-        self.connection.readinto(self.raw_data) # reads serial data into byte array object
         line = np.frombuffer(bytes(self.raw_data), dtype='<f4')
-        self.np_data = np.vstack((self.np_data, line), )
+
+        last_line = self.np_data[-1]
+        if np.array_equal(last_line,line) == False:
+            self.np_data = np.vstack((self.np_data, line))
 
 
 
