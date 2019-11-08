@@ -16,7 +16,7 @@ class connect_to_arduino:
         self.bytes_per_datum = 4
 
         self.data = []
-        self.np_data = np.array([1,2,3,4,5,6,7])
+        self.np_data = np.array([1,2,3,4,5,6,7,8])
         for i in range(self.datum_per_serial_line):   # give an array for each type of data and store them in a list
             self.data.append(collections.deque([0]))
 
@@ -63,9 +63,26 @@ class connect_to_arduino:
         self.raw_data = bytearray(self.datum_per_serial_line * self.bytes_per_datum) # constructs a byte array object
         self.connection.readinto(self.raw_data) # reads serial data into byte array object
         line = np.frombuffer(bytes(self.raw_data), dtype='<f4')
-
+        admittance = 0.0
         last_line = self.np_data[-1]
         if np.array_equal(last_line,line) == False:
+            calibration_magnitude = np.round(np.sqrt((line[3] ** 2) + (line[4] ** 2)), 3)
+            print(calibration_magnitude)
+            if calibration_magnitude != 0.0:
+                gain_factor = (1 / 1) / (calibration_magnitude)
+                print(gain_factor)
+                magnitude = np.round(np.sqrt((line[1] ** 2) + (line[2] ** 2)), 3)
+                print(magnitude)
+                admittance = np.round((gain_factor * magnitude), 3)
+                print(admittance)
+                admittance_array = np.array([admittance])
+                print(line)
+        if admittance != 0.0:
+            line = np.hstack((line, admittance_array))
+            self.np_data = np.vstack((self.np_data, line))
+        if admittance == 0.0:
+            admittance = np.array([0.0])
+            line = np.hstack((line, admittance))
             self.np_data = np.vstack((self.np_data, line))
 
     def write_data(self, data_string):

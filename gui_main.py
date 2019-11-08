@@ -68,7 +68,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def update_data(self):
         self.arduino_connection.read_data()
 
-        self.plot1_graphicsView.plot().setData(x=self.arduino_connection.np_data[1:,3],y=self.arduino_connection.np_data[1:,4], pen=None, symbol='x')
+        self.plot1_graphicsView.plot().setData(x=self.arduino_connection.np_data[1:,0],y=self.arduino_connection.np_data[1:,7], pen=None, symbol='x')
 
         # with concurrent.futures.ThreadPoolExecutor() as executor:
         #     f1 = executor.submit(self.arduino_connection.read_data)
