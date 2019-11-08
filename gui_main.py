@@ -28,7 +28,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.plot1_graphicsView.setClipToView(True)
 
         # empty plot set up
-        self.plot1_graphicsView.plot()
+        plot = self.plot1_graphicsView.plot()
 
         # empty data array setup
         self.data = np.empty(100)
@@ -40,7 +40,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         # refresh timer creation
         self.timer = pg.QtCore.QTimer()
-        self.timer.start(500)
+        self.timer.start(50)
 
         self.connect_pushButton.clicked.connect(self.connect)
 
@@ -67,7 +67,8 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def update_data(self):
         self.arduino_connection.read_data()
-        self.plot1_graphicsView.plot().setData(x=self.arduino_connection.np_data[1:,3],y=self.arduino_connection.np_data[1:,4])
+
+        self.plot1_graphicsView.plot().setData(x=self.arduino_connection.np_data[1:,3],y=self.arduino_connection.np_data[1:,4], pen=None, symbol='x')
 
         # with concurrent.futures.ThreadPoolExecutor() as executor:
         #     f1 = executor.submit(self.arduino_connection.read_data)
