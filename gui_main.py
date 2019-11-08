@@ -13,6 +13,7 @@ Ui_MainWindow, QtBaseClass = uic.loadUiType(qtcreator_file)
 
 class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self):
+
         QtWidgets.QMainWindow.__init__(self)
         Ui_MainWindow.__init__(self)
         self.setupUi(self)
@@ -39,7 +40,6 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         # refresh timer creation
         self.timer = pg.QtCore.QTimer()
-        self.timer.timeout.connect(self.update_data)
         self.timer.start(50)
 
         self.connect_pushButton.clicked.connect(self.connect)
@@ -48,23 +48,36 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     # print start after clicking start function
 
     def connect(self):
-        text = spm.connect_to_arduino().port
+        self.arduino_connection = spm.connect_to_arduino()
+        self.arduino_connection.read_data()
+        text = self.arduino_connection.port
         self.update_status('connected to:  '+ text)
 
     def start_sweep(self):
         self.update_status("Sweep Started")
+        self.timer.timeout.connect(self.update_data)
 
     def update_status(self, text):
         self.bottom_textBrowser.append(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S -- ') +text)
 
     def update_data(self):
-        self.data[self.ptr] = np.random.normal()
+
+        # self.data[self.ptr] = np.random.normal()
+        self.data[self.ptr] = np.array([self.arduino_connection.data[0][self.ptr]])
         self.ptr += 1
         if self.ptr >= self.data.shape[0]:
-            tmp = self.data
-            self.data = np.empty(self.data.shape[0] * 2)
-            self.data[:tmp.shape[0]] = tmp
+             tmp = self.data
+             self.data = np.empty(self.data.shape[0] * 2)
+             self.data[:tmp.shape[0]] = tmp
         self.plot1_graphicsView.plot().setData(self.data[:self.ptr])
+
+
+
+        # dataX = np.array([self.arduino_connection.data[0][1]])
+        # dataY = np.array([self.arduino_connection.data[1][1]])
+        # print(dataX)
+        # print(dataY)
+        # self.plot1_graphicsView.plot().setData(x=dataX, y=dataY)
 
 
 

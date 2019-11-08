@@ -263,7 +263,7 @@ class serialPlot:
         # timeText.set_text(str(self.plotTimer) + 'ms')
         privateData = copy.deepcopy(self.rawData[:])    # so that the 3 values in our plots will be synchronized to the same sample time
         for i in range(self.numPlots):
-            data = privateData[(i*self.dataNumBytes):(self.dataNumBytes + i*self.dataNumBytes)]
+            data = privateData[(i*self.dataNumBytes):(self.dataNumBytes + i*self.dataNumBytes)] # choops up data by length of data point in bytes and amount of data points per serial read line
             value,  = struct.unpack(self.dataType, data)
             self.data[i].append(value)    # we get the latest data point and append it to our array
             lines[i].set_data(range(self.plotMaxLength), self.data[i])
@@ -828,6 +828,7 @@ def main():
     numPlots = 6            # number of plots in 1 graph
 
     s = serialPlot(portName, baudRate, maxPlotLength, dataNumBytes, numPlots)   # initializes all required variables
+    #   serialPlot(portName, baudrate, bytesize,
 
     if s.connected is True:
         s.readSerialStart() # starts background thread
