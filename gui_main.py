@@ -54,6 +54,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.update_status('connected to:  '+ text)
 
     def start_sweep(self):
+        self.arduino_connection.write_data('59330')
         self.update_status("Sweep Started")
         self.timer.timeout.connect(self.update_data)
 
@@ -62,7 +63,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def update_data(self):
         self.arduino_connection.read_data()
-        self.plot1_graphicsView.plot().setData(x=self.arduino_connection.np_data[1:,0],y=self.arduino_connection.np_data[1:,1])
+        self.plot1_graphicsView.plot().setData(x=self.arduino_connection.np_data[1:,1],y=self.arduino_connection.np_data[1:,2])
 
 
         # # self.data[self.ptr] = np.random.normal()
