@@ -5,7 +5,7 @@ from pyqtgraph.Qt import QtCore, QtGui
 import pyqtgraph as pg
 import datetime as dt
 import serial_port_module as spm
-
+import concurrent.futures
 
 qtcreator_file  = "ispectro_xml.ui" # Enter file here, this is generated with qt creator or desinger
 Ui_MainWindow, QtBaseClass = uic.loadUiType(qtcreator_file)
@@ -69,25 +69,9 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.arduino_connection.read_data()
         self.plot1_graphicsView.plot().setData(x=self.arduino_connection.np_data[1:,3],y=self.arduino_connection.np_data[1:,4])
 
-
-        # # self.data[self.ptr] = np.random.normal()
-        # self.data[self.ptr] = np.array([self.arduino_connection.data[0][self.ptr]])
-        # self.ptr += 1
-        # if self.ptr >= self.data.shape[0]:
-        #      tmp = self.data
-        #      self.data = np.empty(self.data.shape[0] * 2)
-        #      self.data[:tmp.shape[0]] = tmp
-        # self.plot1_graphicsView.plot().setData(self.data[:self.ptr])
-
-
-
-        # dataX = np.array([self.arduino_connection.data[0][1]])
-        # dataY = np.array([self.arduino_connection.data[1][1]])
-        # print(dataX)
-        # print(dataY)
-        # self.plot1_graphicsView.plot().setData(x=dataX, y=dataY)
-
-
+        # with concurrent.futures.ThreadPoolExecutor() as executor:
+        #     f1 = executor.submit(self.arduino_connection.read_data)
+        #     f2 = executor.submit(self.plot1_graphicsView.plot().setData, x=self.arduino_connection.np_data[1:, 3],y=self.arduino_connection.np_data[1:, 4])
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
