@@ -68,9 +68,6 @@ class connect_to_arduino:
         if np.array_equal(last_line,line) == False:
             self.np_data = np.vstack((self.np_data, line))
 
-
-
-
     def write_data(self, data_string):
         data = data_string.encode('utf-8')
         self.connection.write(data)
