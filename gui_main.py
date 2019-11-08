@@ -40,7 +40,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         # refresh timer creation
         self.timer = pg.QtCore.QTimer()
-        self.timer.start(50)
+        self.timer.start(500)
 
         self.connect_pushButton.clicked.connect(self.connect)
 
@@ -58,12 +58,16 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.update_status("Sweep Started")
         self.timer.timeout.connect(self.update_data)
 
+    def start_stop(self):
+        self.arduino_connection.write_data('59333')
+        self.update_status("Sweep Aborted")
+
     def update_status(self, text):
         self.bottom_textBrowser.append(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S -- ') +text)
 
     def update_data(self):
         self.arduino_connection.read_data()
-        self.plot1_graphicsView.plot().setData(x=self.arduino_connection.np_data[1:,1],y=self.arduino_connection.np_data[1:,2])
+        self.plot1_graphicsView.plot().setData(x=self.arduino_connection.np_data[1:,3],y=self.arduino_connection.np_data[1:,4])
 
 
         # # self.data[self.ptr] = np.random.normal()

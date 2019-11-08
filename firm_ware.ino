@@ -117,6 +117,10 @@ void loop(){
           measureTemperature();
           break;
 
+        case 59333:  //Measure Temperature
+          reset();
+          break;
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // R/RRC calibration selection
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -288,6 +292,22 @@ void programReg(){
 }
 
 
+void reset(){
+  writeData(CTRL_REG2,0b11000); // reset
+  writeData(CTRL_REG2,0b10110001); // standby mode
+}
+
+//CTRL_REG
+//D15-D8
+//D15 D14 D13 D12 D11(none) D10 D09 D08(pga)
+//  1   0   1   1   0         0   0   1(pga)
+
+//CTRL_REG2
+//D7-D0
+//D7 D6 D5 D4 D3 D2 D1 D0
+// 1  1  1  1  1  1  1  1
+// 0  0  0  1  1  0  0  0 reset
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  RUN SWEEP
@@ -311,12 +331,13 @@ void runSweepOFF() {
   int flop=0;
   int i=0;
   int gf=1;
+  double f;
   double x;
   double y;
-  double z;
   double t;
+  double xcal;
   double ycal;
-  double zcal;
+  double flag_float;
   programReg();
 
 
@@ -340,7 +361,7 @@ void runSweepOFF() {
 
         freq = start_freq + i*incre_freq;
         freq = freq/1000;
-        double x = freq * 1.0;
+        double f = freq * 1.0;
 
         byte R1 = readData(RE_DATA_R1);
         byte R2 = readData(RE_DATA_R2);
@@ -348,20 +369,21 @@ void runSweepOFF() {
         R1  = readData(IMG_DATA_R1);
         R2  = readData(IMG_DATA_R2);
         img = (R1 << 8) | R2;
-        double y = (double)re * 1.0;
-        double z = (double)img * 1.0;
+        double x = (double)re * 1.0;
+        double y = (double)img * 1.0;
         R1 = readData(RE_DATA_R1);
         R2 = readData(RE_DATA_R2);
         re = (R1 << 8) | R2;
         R1  = readData(IMG_DATA_R1);
         R2  = readData(IMG_DATA_R2);
         img = (R1 << 8) | R2;
-        double ycal = (double)re * 1.0;
-        double zcal = (double)img * 1.0;
+        double xcal = (double)re * 1.0;
+        double ycal = (double)img * 1.0;
         double t = measureTemperatureDouble();
         t = (double)t * 1.0;
 
-        sendToPC(&x, &y, &z, &t, &ycal, &zcal);
+        flag_float = (double)flag;
+        sendToPC(&f, &x, &y,  &xcal, &ycal, &t, &flag_float);
 
         if((readData(STATUS_REG) & 0x07) < 4 ){ //Increment frequency
            writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x30); // increment
@@ -404,12 +426,16 @@ void runSweep() {
   int flop=0;
   int i=0;
   int gf=1;
+  double f;
   double x;
   double y;
-  double z;
-  double t;
+
+  double xcal;
   double ycal;
-  double zcal;
+
+  double t;
+  double flag_float;
+
   programReg();
 
 
@@ -434,7 +460,7 @@ void runSweep() {
 
         freq = start_freq + i*incre_freq;
         freq = freq/1000;
-        double x = freq * 1.0;
+        double f = freq * 1.0;
 
       if (flop==0) {
         delay(100);
@@ -446,8 +472,8 @@ void runSweep() {
         R1  = readData(IMG_DATA_R1);
         R2  = readData(IMG_DATA_R2);
         img = (R1 << 8) | R2;
-        y = (double)re * 1.0;
-        z = (double)img * 1.0;
+        x = (double)re * 1.0;
+        y = (double)img * 1.0;
 
       if((readData(STATUS_REG) & 0b111) < 0b100 ){ //Increment frequency
         writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x40); // repeats
@@ -467,13 +493,13 @@ void runSweep() {
             R1  = readData(IMG_DATA_R1);
             R2  = readData(IMG_DATA_R2);
             img = (R1 << 8) | R2;
-            ycal = (double)re * 1.0;
-            zcal = (double)img * 1.0;
+            xcal = (double)re * 1.0;
+            ycal = (double)img * 1.0;
             delay(150);
             t = measureTemperatureDouble();
             t = (double)t * 1.0;
-
-            sendToPC(&x, &y, &z, &t, &ycal, &zcal);
+            flag_float = (double)flag;
+            sendToPC(&f, &x, &y,  &xcal, &ycal, &t, &flag_float);
       }
         if((readData(STATUS_REG) & 0b111) < 0b100 ){ //Increment frequency
            writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x30); // increment
@@ -628,7 +654,7 @@ void sendToPC(int* data1, int* data2, int* data3)
 }
 
 
-void sendToPC(double* data1, double* data2, double* data3, double* data4, double* data5, double* data6)
+void sendToPC(double* data1, double* data2, double* data3, double* data4, double* data5, double* data6, double* data7)
 {
   byte* byteData1 = (byte*)(data1);
   byte* byteData2 = (byte*)(data2);
@@ -636,13 +662,15 @@ void sendToPC(double* data1, double* data2, double* data3, double* data4, double
   byte* byteData4 = (byte*)(data4);
   byte* byteData5 = (byte*)(data5);
   byte* byteData6 = (byte*)(data6);
-  byte buf[24] = {byteData1[0], byteData1[1], byteData1[2], byteData1[3],
+  byte* byteData7 = (byte*)(data7);
+  byte buf[28] = {byteData1[0], byteData1[1], byteData1[2], byteData1[3],
                  byteData2[0], byteData2[1], byteData2[2], byteData2[3],
                  byteData3[0], byteData3[1], byteData3[2], byteData3[3],
                  byteData4[0], byteData4[1], byteData4[2], byteData4[3],
                  byteData5[0], byteData5[1], byteData5[2], byteData5[3],
-                 byteData6[0], byteData6[1], byteData6[2], byteData6[3]};
-  Serial.write(buf, 24);
+                 byteData6[0], byteData6[1], byteData6[2], byteData6[3],
+                 byteData7[0], byteData7[1], byteData7[2], byteData7[3]};
+  Serial.write(buf, 28);
 }
 
 
@@ -952,4 +980,3 @@ void ADG1608_RFB(int route){
 
 
 
-// test

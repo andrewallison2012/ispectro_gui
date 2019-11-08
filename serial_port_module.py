@@ -72,7 +72,7 @@ class connect_to_arduino:
         self.raw_data = bytearray(self.datum_per_serial_line * self.bytes_per_datum) # constructs a byte array object
         self.connection.readinto(self.raw_data) # reads serial data into byte array object
         line = np.frombuffer(bytes(self.raw_data), dtype='<f4')
-        self.np_data = np.vstack((self.np_data, line))
+        self.np_data = np.vstack((self.np_data, line), )
 
 
 
