@@ -49,7 +49,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def connect(self):
         self.arduino_connection = spm.connect_to_arduino()
-        self.arduino_connection.read_data()
+
         text = self.arduino_connection.port
         self.update_status('connected to:  '+ text)
 
@@ -61,15 +61,18 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.bottom_textBrowser.append(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S -- ') +text)
 
     def update_data(self):
+        self.arduino_connection.read_data()
+        self.plot1_graphicsView.plot().setData(x=self.arduino_connection.np_data[1:,0],y=self.arduino_connection.np_data[1:,1])
 
-        # self.data[self.ptr] = np.random.normal()
-        self.data[self.ptr] = np.array([self.arduino_connection.data[0][self.ptr]])
-        self.ptr += 1
-        if self.ptr >= self.data.shape[0]:
-             tmp = self.data
-             self.data = np.empty(self.data.shape[0] * 2)
-             self.data[:tmp.shape[0]] = tmp
-        self.plot1_graphicsView.plot().setData(self.data[:self.ptr])
+
+        # # self.data[self.ptr] = np.random.normal()
+        # self.data[self.ptr] = np.array([self.arduino_connection.data[0][self.ptr]])
+        # self.ptr += 1
+        # if self.ptr >= self.data.shape[0]:
+        #      tmp = self.data
+        #      self.data = np.empty(self.data.shape[0] * 2)
+        #      self.data[:tmp.shape[0]] = tmp
+        # self.plot1_graphicsView.plot().setData(self.data[:self.ptr])
 
 
 

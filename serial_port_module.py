@@ -4,6 +4,7 @@ import sys
 import copy
 import struct
 import collections
+import numpy as np
 
 class connect_to_arduino:
     def __init__(self):
@@ -11,10 +12,11 @@ class connect_to_arduino:
         self.operating_system = self.get_platform()
         self.timeout = 3
 
-        self.datum_per_serial_line = 6
+        self.datum_per_serial_line = 7
         self.bytes_per_datum = 4
 
         self.data = []
+        self.np_data = np.array([1,2,3,4,5,6,7])
         for i in range(self.datum_per_serial_line):   # give an array for each type of data and store them in a list
             self.data.append(collections.deque([0]))
 
@@ -22,6 +24,8 @@ class connect_to_arduino:
             self.open_serial_linux()
         elif self.operating_system == 'Windows':
             self.open_serial_windows(self)
+
+
 
     def open_serial_linux(self):
         self.context = pyudev.Context()
@@ -56,13 +60,21 @@ class connect_to_arduino:
 
     def read_data(self):
 
-        self.raw_data = bytearray(self.datum_per_serial_line * self.bytes_per_datum)
-        self.connection.readinto(self.raw_data)
-        self.data_copy = copy.deepcopy(self.raw_data[:])
-        for i in range(self.datum_per_serial_line):
-            data = self.data_copy[(i*self.bytes_per_datum):(self.bytes_per_datum + (i * self.bytes_per_datum))]
-            value, = struct.unpack('f', data)
-            self.data[i].append(value)
+        self.raw_data = bytearray(self.datum_per_serial_line * self.bytes_per_datum) # constructs a byte array object
+        self.connection.readinto(self.raw_data) # reads serial data into byte array object
+
+        # self.data_copy = copy.deepcopy(self.raw_data[:]) # copies byte array object after it is read into
+        # for i in range(self.datum_per_serial_line):
+        #     data = self.data_copy[(i*self.bytes_per_datum):(self.bytes_per_datum + (i * self.bytes_per_datum))] # parses/interates through byte array object data in serial data 0 1 2 3 4 5 each 4 bytes long
+        #     value, = struct.unpack('f', data) # saves data in byte to value
+        #     self.data[i].append(value) # adds the value to the line
+
+        self.raw_data = bytearray(self.datum_per_serial_line * self.bytes_per_datum) # constructs a byte array object
+        self.connection.readinto(self.raw_data) # reads serial data into byte array object
+        line = np.frombuffer(bytes(self.raw_data), dtype='<f4')
+        self.np_data = np.vstack((self.np_data, line))
+
+
 
 
     def write_data(self, data_string):
