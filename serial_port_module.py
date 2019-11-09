@@ -76,12 +76,6 @@ class connect_to_arduino:
                 admittance = np.round((gain_factor * magnitude), 3)
                 print(admittance)
                 admittance_array = np.array([admittance])
-                print(line)
-        if admittance != 0.0:
-            line = np.hstack((line, admittance_array))
-            self.np_data = np.vstack((self.np_data, line))
-        if admittance == 0.0:
-            admittance = np.array([0.0])
             line = np.hstack((line, admittance))
             self.np_data = np.vstack((self.np_data, line))
 

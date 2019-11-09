@@ -1,15 +1,12 @@
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import numpy as np
-from pyqtgraph.Qt import QtCore, QtGui
 import pyqtgraph as pg
 import datetime as dt
 import serial_port_module as spm
-import concurrent.futures
 
 qtcreator_file  = "ispectro_xml.ui" # Enter file here, this is generated with qt creator or desinger
 Ui_MainWindow, QtBaseClass = uic.loadUiType(qtcreator_file)
-
 
 class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self):
@@ -20,16 +17,12 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.update_status("iSpectro Loaded\nWelcome")
 
-        # sets the plots y max
-        # self.plot1_graphicsView.setYRange(min=0, max=100)
-
         # sets data for plot
         self.plot1_graphicsView.setDownsampling(mode='peak')
         self.plot1_graphicsView.setClipToView(True)
 
-        # empty plot set up
         plot = self.plot1_graphicsView.plot()
-
+        # empty data array setup
         # empty data array setup
         self.data = np.empty(100)
         self.ptr = 0
@@ -41,15 +34,11 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # refresh timer creation
         self.timer = pg.QtCore.QTimer()
         self.timer.start(50)
-
         self.connect_pushButton.clicked.connect(self.connect)
-
-    # testing
-    # print start after clicking start function
+        self.connect()
 
     def connect(self):
         self.arduino_connection = spm.connect_to_arduino()
-
         text = self.arduino_connection.port
         self.update_status('connected to:  '+ text)
 
@@ -67,12 +56,20 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def update_data(self):
         self.arduino_connection.read_data()
+        i =+ 1
+        spots3 = []
+        # self.plot1_graphicsView.plot().setData(x=self.arduino_connection.np_data[1:,0],y=self.arduino_connection.np_data[1:,7], pen=None, symbol='x')
+        for i in range(np.alen(self.arduino_connection.np_data[1:,0])):
+            for j in range(np.alen(self.arduino_connection.np_data[1:,7])):
+                spots3.append({'pos': (self.arduino_connection.np_data[-1:,0], self.arduino_connection.np_data[-1,7]),
+                               'brush': pg.intColor(i, 100)})
 
-        self.plot1_graphicsView.plot().setData(x=self.arduino_connection.np_data[1:,0],y=self.arduino_connection.np_data[1:,7], pen=None, symbol='x')
+        view = self.plot1_graphicsView
+        s3 = pg.ScatterPlotItem()  ## Set pxMode=False to allow spots to transform with the view
+        s3.addPoints(spots3)
+        view.addItem(s3)
 
-        # with concurrent.futures.ThreadPoolExecutor() as executor:
-        #     f1 = executor.submit(self.arduino_connection.read_data)
-        #     f2 = executor.submit(self.plot1_graphicsView.plot().setData, x=self.arduino_connection.np_data[1:, 3],y=self.arduino_connection.np_data[1:, 4])
+
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
