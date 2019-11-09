@@ -1,15 +1,32 @@
-import sys
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
-import numpy as np
 import pyqtgraph as pg
 import datetime as dt
-import serial_port_module as spm
+import serial_port_module
+import sys
+from pyqtgraph.Qt import QtCore, QtGui
+import threading
+import numpy as np
+import plot_module
+import time
 
 qtcreator_file  = "ispectro_xml.ui" # Enter file here, this is generated with qt creator or desinger
 Ui_MainWindow, QtBaseClass = uic.loadUiType(qtcreator_file)
 
+class Helper(QtCore.QObject):
+    signal_changed = QtCore.pyqtSignal(str,tuple)
+
+def get_data(helper, name):
+    while True:
+        t = 1
+        s = 2
+        time.sleep(.1)
+        serial_port_module.s.read_data()
+        helper.signal_changed.emit(name, (t, s))
+
+
 class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self):
+        self.arduino_connection = serial_port_module.connect_to_arduino()
 
         QtWidgets.QMainWindow.__init__(self)
         Ui_MainWindow.__init__(self)
@@ -27,6 +44,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.data = np.empty(100)
         self.ptr = 0
 
+
         # print start after clicking start
         self.start_QPushButton.clicked.connect(self.start_sweep)
         self.stop_QPushButton.clicked.connect(lambda: self.update_status("Sweep Stopped"))
@@ -38,41 +56,42 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.connect()
 
     def connect(self):
-        self.arduino_connection = spm.connect_to_arduino()
         text = self.arduino_connection.port
         self.update_status('connected to:  '+ text)
 
     def start_sweep(self):
         self.arduino_connection.write_data('59330')
         self.update_status("Sweep Started")
-        self.timer.timeout.connect(self.update_data)
+
 
     def start_stop(self):
-        self.arduino_connection.write_data('59333')
+        self.opened_port.write_data('59333')
         self.update_status("Sweep Aborted")
 
     def update_status(self, text):
         self.bottom_textBrowser.append(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S -- ') +text)
 
-    def update_data(self):
+    def graph(self):
         self.arduino_connection.read_data()
-        i =+ 1
-        spots3 = []
-        # self.plot1_graphicsView.plot().setData(x=self.arduino_connection.np_data[1:,0],y=self.arduino_connection.np_data[1:,7], pen=None, symbol='x')
-        for i in range(np.alen(self.arduino_connection.np_data[1:,0])):
-            for j in range(np.alen(self.arduino_connection.np_data[1:,7])):
-                spots3.append({'pos': (self.arduino_connection.np_data[-1:,0], self.arduino_connection.np_data[-1,7]),
+        self.datapoints = []
+        for i in self.arduino_connection.np_data[1:,0]:
+                self.datapoints.append({'pos': (self.arduino_connection.np_data[-1:,0], self.arduino_connection.np_data[-1,7]),
                                'brush': pg.intColor(i, 100)})
-
         view = self.plot1_graphicsView
-        s3 = pg.ScatterPlotItem()  ## Set pxMode=False to allow spots to transform with the view
-        s3.addPoints(spots3)
-        view.addItem(s3)
+        scatterplot = pg.ScatterPlotItem()
+        scatterplot.addPoints(self.datapoints)
+        view.addItem(scatterplot)
 
-
+    @QtCore.pyqtSlot(str, tuple)
+    def update_data(self):
+        self.graph()
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
+    helper = Helper()
     window = MyWindow()
+
+    helper.signal_changed.connect(window.graph, QtCore.Qt.QueuedConnection)
+    threading.Thread(target=get_data, args=(helper, "910D"), daemon=True).start()
     window.show()
     sys.exit(app.exec_())
