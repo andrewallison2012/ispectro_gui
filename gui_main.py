@@ -62,7 +62,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         for i in range(np.alen(self.arduino_connection.np_data[1:,0])):
             for j in range(np.alen(self.arduino_connection.np_data[1:,7])):
                 spots3.append({'pos': (self.arduino_connection.np_data[-1:,0], self.arduino_connection.np_data[-1,7]),
-                               'brush': pg.intColor(i, 100)})
+                               'brush': pg.intColor(i, 120)})
 
         view = self.plot1_graphicsView
         s3 = pg.ScatterPlotItem()  ## Set pxMode=False to allow spots to transform with the view
