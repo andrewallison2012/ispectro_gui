@@ -3,18 +3,86 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import numpy as np
 import pyqtgraph as pg
 import datetime as dt
+
+from PyQt5.QtWidgets import QTextEdit
+
 import serial_port_module as spm
+import queue as Queue
+import serial
+import time
+
+port_name ="/dev/ttyACM0"
+baud_rate = 38400
+
 
 qtcreator_file  = "ispectro_xml.ui" # Enter file here, this is generated with qt creator or desinger
 Ui_MainWindow, QtBaseClass = uic.loadUiType(qtcreator_file)
+
+# Custom text box, catching keystrokes
+class MyTextBox(QTextEdit):
+    def __init__(self, *args):
+        QTextEdit.__init__(self, *args)
+
+class SerialThread(QtCore.QThread):
+    def __init__(self, port_name, buad_rate):
+        QtCore.QThread.__init__(self)
+        self.port_name = port_name
+        self.buad_rate = buad_rate
+        self.transmit = Queue.Queue()
+        self.serial_running = True
+
+    def serial_out(self, data_to_send):
+        self.transmit.put(data_to_send)
+
+    def serial_in(self, data_to_read):
+        display(data_to_read)
+
+    def run(self):
+        try:
+            self.serial_connection = serial.Serial(self.port_name, self.buad_rate, timeout=3)
+            # time.sleep(3 *1.2)
+            # self.serial_connection.flushInput()
+        except:
+            self.serial_connection = None
+        if not self.serial_connection:
+            print('could not open port')
+            self.serial_running = False
+
+        while self.serial_running:
+            self.raw_data = bytearray(7*4)
+            self.serial_connection.readinto(self.raw_data)
+            line = np.frombuffer(bytes(self.raw_data), dtype='<f4')
+            print(line)
+            print(self.raw_data)
+
+            # s = self.serial_connection.read(self.serial_connection.in_waiting or 1)
+            # if s:
+            #     self.raw_data = bytearray(7*4)
+            #     self.serial_connection.readinto(self.raw_data)
+            #     line = np.frombuffer(bytes(self.raw_data), dtype='<f4')
+            #     print(line)
+            #     print(self.raw_data)
+            #     # line = self.serial_in(bytes(s))
+            #     # if line != None:
+            #     #     print(line)
+            #
+            # if not self.transmit.empty():
+            #     transmitted = str(self.transmit.get())
+            #     self.serial_connection.write(bytes(transmitted))
+
+        if self.serial_connection:
+            self.serial_connection.close()
+            self.serial_connection = None
 
 class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self):
 
         QtWidgets.QMainWindow.__init__(self)
         Ui_MainWindow.__init__(self)
-        self.setupUi(self)
 
+        self.setupUi(self)
+        self.serial_thread = SerialThread(port_name, baud_rate)
+        self.serial_thread.start()
         self.update_status("iSpectro Loaded\nWelcome")
 
         # sets data for plot
@@ -36,6 +104,9 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.timer.start(50)
         self.connect_pushButton.clicked.connect(self.connect)
         self.connect()
+
+    def write(self, text):  # Handle sys.stdout.write: update display
+        self.text_update.emit(text)  # Send signal to synchronise call with main thread
 
     def connect(self):
         self.arduino_connection = spm.connect_to_arduino()
@@ -72,6 +143,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
 if __name__ == "__main__":
+
     app = QtWidgets.QApplication(sys.argv)
     window = MyWindow()
     window.show()
