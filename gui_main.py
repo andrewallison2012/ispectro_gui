@@ -15,6 +15,8 @@ port_name ="/dev/ttyACM0"
 baud_rate = 38400
 
 
+
+
 qtcreator_file  = "ispectro_xml.ui" # Enter file here, this is generated with qt creator or desinger
 Ui_MainWindow, QtBaseClass = uic.loadUiType(qtcreator_file)
 
@@ -31,6 +33,8 @@ class SerialThread(QtCore.QThread):
         self.transmit = Queue.Queue()
         self.serial_running = True
 
+
+
     def serial_out(self, data_to_send):
         self.transmit.put(data_to_send)
 
@@ -38,6 +42,7 @@ class SerialThread(QtCore.QThread):
         display(data_to_read)
 
     def run(self):
+        self.np_data = np.array([1, 2, 3, 4, 5, 6, 7])
         try:
             self.serial_connection = serial.Serial(self.port_name, self.buad_rate, timeout=3)
             # time.sleep(3 *1.2)
@@ -49,26 +54,16 @@ class SerialThread(QtCore.QThread):
             self.serial_running = False
 
         while self.serial_running:
+
             self.raw_data = bytearray(7*4)
             self.serial_connection.readinto(self.raw_data)
             line = np.frombuffer(bytes(self.raw_data), dtype='<f4')
-            print(line)
-            print(self.raw_data)
 
-            # s = self.serial_connection.read(self.serial_connection.in_waiting or 1)
-            # if s:
-            #     self.raw_data = bytearray(7*4)
-            #     self.serial_connection.readinto(self.raw_data)
-            #     line = np.frombuffer(bytes(self.raw_data), dtype='<f4')
-            #     print(line)
-            #     print(self.raw_data)
-            #     # line = self.serial_in(bytes(s))
-            #     # if line != None:
-            #     #     print(line)
-            #
-            # if not self.transmit.empty():
-            #     transmitted = str(self.transmit.get())
-            #     self.serial_connection.write(bytes(transmitted))
+            last_line = self.np_data[-1]
+            if np.array_equal(last_line, line) == False:
+                self.np_data = np.vstack((self.np_data, line))
+                print(line)
+                print(self.raw_data)
 
         if self.serial_connection:
             self.serial_connection.close()
@@ -80,10 +75,14 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         QtWidgets.QMainWindow.__init__(self)
         Ui_MainWindow.__init__(self)
 
+
+
         self.setupUi(self)
         self.serial_thread = SerialThread(port_name, baud_rate)
         self.serial_thread.start()
         self.update_status("iSpectro Loaded\nWelcome")
+
+
 
         # sets data for plot
         self.plot1_graphicsView.setDownsampling(mode='peak')
@@ -126,13 +125,13 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.bottom_textBrowser.append(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S -- ') +text)
 
     def update_data(self):
-        self.arduino_connection.read_data()
+
         i =+ 1
         spots3 = []
         # self.plot1_graphicsView.plot().setData(x=self.arduino_connection.np_data[1:,0],y=self.arduino_connection.np_data[1:,7], pen=None, symbol='x')
-        for i in range(np.alen(self.arduino_connection.np_data[1:,0])):
-            for j in range(np.alen(self.arduino_connection.np_data[1:,7])):
-                spots3.append({'pos': (self.arduino_connection.np_data[-1:,0], self.arduino_connection.np_data[-1,7]),
+        for i in range(np.alen(self.serial_thread.np_data[1:,0])):
+            for j in range(np.alen(self.serial_thread.np_data[1:,6])):
+                spots3.append({'pos': (self.serial_thread.np_data[-1:,1], self.serial_thread.np_data[-1,2]),
                                'brush': pg.intColor(i, 120)})
 
         view = self.plot1_graphicsView
