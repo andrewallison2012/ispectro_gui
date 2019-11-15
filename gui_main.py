@@ -117,7 +117,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # self.plot1_graphicsView.plot().setData(x=self.arduino_connection.np_data[1:,0],y=self.arduino_connection.np_data[1:,7], pen=None, symbol='x')
         for i in range(np.alen(self.serial_thread.np_data[1:,0])):
             for j in range(np.alen(self.serial_thread.np_data[1:,6])):
-                spots3.append({'pos': (self.serial_thread.np_data[-1:,1], self.serial_thread.np_data[-1,2]),
+                spots3.append({'pos': (self.serial_thread.np_data[-1:,0], self.serial_thread.np_data[-1,1]),
                                'brush': pg.intColor(i, 120)})
 
         view = self.plot1_graphicsView
