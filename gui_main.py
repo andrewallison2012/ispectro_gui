@@ -3,19 +3,13 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import numpy as np
 import pyqtgraph as pg
 import datetime as dt
-
 from PyQt5.QtWidgets import QTextEdit
-
 import serial_port_module as spm
 import queue as Queue
 import serial
-import time
 
 port_name ="/dev/ttyACM0"
 baud_rate = 38400
-
-
-
 
 qtcreator_file  = "ispectro_xml.ui" # Enter file here, this is generated with qt creator or desinger
 Ui_MainWindow, QtBaseClass = uic.loadUiType(qtcreator_file)
@@ -32,8 +26,6 @@ class SerialThread(QtCore.QThread):
         self.buad_rate = buad_rate
         self.transmit = Queue.Queue()
         self.serial_running = True
-
-
 
     def serial_out(self, data_to_send):
         self.transmit.put(data_to_send)
@@ -75,22 +67,16 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         QtWidgets.QMainWindow.__init__(self)
         Ui_MainWindow.__init__(self)
 
-
-
         self.setupUi(self)
         self.serial_thread = SerialThread(port_name, baud_rate)
         self.serial_thread.start()
         self.update_status("iSpectro Loaded\nWelcome")
-
-
 
         # sets data for plot
         self.plot1_graphicsView.setDownsampling(mode='peak')
         self.plot1_graphicsView.setClipToView(True)
 
         plot = self.plot1_graphicsView.plot()
-        # empty data array setup
-        # empty data array setup
         self.data = np.empty(100)
         self.ptr = 0
 
@@ -100,8 +86,8 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         # refresh timer creation
         self.timer = pg.QtCore.QTimer()
-        self.timer.start(50)
-        self.connect_pushButton.clicked.connect(self.connect)
+        self.timer.start(250)
+        self.connect_pushButton.clicked.connect(self.update_data)
         self.connect()
 
     def write(self, text):  # Handle sys.stdout.write: update display
@@ -138,8 +124,6 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         s3 = pg.ScatterPlotItem()  ## Set pxMode=False to allow spots to transform with the view
         s3.addPoints(spots3)
         view.addItem(s3)
-
-
 
 if __name__ == "__main__":
 
