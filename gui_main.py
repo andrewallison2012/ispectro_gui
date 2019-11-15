@@ -27,8 +27,9 @@ class SerialThread(QtCore.QThread):
         self.transmit = Queue.Queue()
         self.serial_running = True
 
-    def serial_out(self, data_to_send):
-        self.transmit.put(data_to_send)
+    def write_data(self, data_string):
+        data = data_string.encode('utf-8')
+        self.serial_connection.write(data)
 
     def serial_in(self, data_to_read):
         display(data_to_read)
@@ -37,9 +38,11 @@ class SerialThread(QtCore.QThread):
         self.np_data = np.array([1, 2, 3, 4, 5, 6, 7])
         try:
             self.serial_connection = serial.Serial(self.port_name, self.buad_rate, timeout=3)
+
             # time.sleep(3 *1.2)
             # self.serial_connection.flushInput()
         except:
+            # self.serial_running = True
             self.serial_connection = None
         if not self.serial_connection:
             print('could not open port')
@@ -82,29 +85,25 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         # print start after clicking start
         self.start_QPushButton.clicked.connect(self.start_sweep)
-        self.stop_QPushButton.clicked.connect(lambda: self.update_status("Sweep Stopped"))
+        self.stop_QPushButton.clicked.connect(self.stop_sweep)
 
         # refresh timer creation
         self.timer = pg.QtCore.QTimer()
         self.timer.start(250)
         self.connect_pushButton.clicked.connect(self.update_data)
-        self.connect()
+        # self.connect()
 
     def write(self, text):  # Handle sys.stdout.write: update display
         self.text_update.emit(text)  # Send signal to synchronise call with main thread
 
-    def connect(self):
-        self.arduino_connection = spm.connect_to_arduino()
-        text = self.arduino_connection.port
-        self.update_status('connected to:  '+ text)
-
     def start_sweep(self):
-        self.arduino_connection.write_data('59330')
+        self.serial_thread.write_data('59330')
         self.update_status("Sweep Started")
         self.timer.timeout.connect(self.update_data)
 
-    def start_stop(self):
-        self.arduino_connection.write_data('59333')
+    def stop_sweep(self):
+        self.serial_thread.write_data('7742')
+        # self.arduino_connection.write_data('7742')
         self.update_status("Sweep Aborted")
 
     def update_status(self, text):
@@ -114,11 +113,12 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         i =+ 1
         spots3 = []
+        if np.alen(self.serial_thread.np_data[1:,0]) > 1:
         # self.plot1_graphicsView.plot().setData(x=self.arduino_connection.np_data[1:,0],y=self.arduino_connection.np_data[1:,7], pen=None, symbol='x')
-        for i in range(np.alen(self.serial_thread.np_data[1:,0])):
-            for j in range(np.alen(self.serial_thread.np_data[1:,6])):
-                spots3.append({'pos': (self.serial_thread.np_data[-1:,0], self.serial_thread.np_data[-1,1]),
-                               'brush': pg.intColor(i, 120)})
+            for i in range(np.alen(self.serial_thread.np_data[1:,0])):
+                for j in range(np.alen(self.serial_thread.np_data[1:,6])):
+                    spots3.append({'pos': (self.serial_thread.np_data[-1:,1], self.serial_thread.np_data[-1,2]),
+                                   'brush': pg.intColor(i, 120)})
 
         view = self.plot1_graphicsView
         s3 = pg.ScatterPlotItem()  ## Set pxMode=False to allow spots to transform with the view
