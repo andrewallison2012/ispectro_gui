@@ -3,10 +3,9 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import numpy as np
 import pyqtgraph as pg
 import datetime as dt
-from PyQt5.QtWidgets import QTextEdit
-import serial_port_module as spm
 import queue as Queue
 import serial
+from PyQt5.QtCore import QThread, QTimer, QEventLoop, pyqtSignal
 
 port_name ="/dev/ttyACM0"
 baud_rate = 38400
@@ -14,33 +13,59 @@ baud_rate = 38400
 qtcreator_file  = "ispectro_xml.ui" # Enter file here, this is generated with qt creator or desinger
 Ui_MainWindow, QtBaseClass = uic.loadUiType(qtcreator_file)
 
-# Custom text box, catching keystrokes
-class MyTextBox(QTextEdit):
-    def __init__(self, *args):
-        QTextEdit.__init__(self, *args)
+# class SerialGraphThread(QtCore.QThread):
+#     signal = pyqtSignal(object)
+#
+#     def __init__(self, connection_object, plot1_graphicsView, *args, **kwargs):
+#         QtCore.QThread.__init__(self, *args, **kwargs)
+#         self.connection_object = connection_object
+#         self.plot1_graphicsView = plot1_graphicsView
+#         self.dataCollectionTimer = QTimer()
+#         self.dataCollectionTimer.moveToThread(self)
+#         self.dataCollectionTimer.timeout.connect(self.update_data)
+#         self.running = True
+
+    # def update_data(self):
+    #     i =+ 1
+    #     spots3 = []
+    #     if self.connection_object == (2,7):
+    #     # self.plot1_graphicsView.plot().setData(x=self.arduino_connection.np_data[1:,0],y=self.arduino_connection.np_data[1:,7], pen=None, symbol='x')
+    #         for i in range(np.alen(self.connection_object[1:,0])):
+    #             for j in range(np.alen(self.connection_object[1:,6])):
+    #                 spots3.append({'pos': (self.connection_object[-1:,1], self.connection_object[-1,2]),
+    #                                'brush': pg.intColor(i, 120)})
+    #
+    #     view = self.plot1_graphicsView.plot()
+    #     s3 = pg.ScatterPlotItem()  ## Set pxMode=False to allow spots to transform with the view
+    #     s3.addPoints(spots3)
+    #     view.addItem(s3)
+    #
+    #     print('raan')
+    #
+    # def run(self):
+    #     while self.running:
+    #         self.dataCollectionTimer.start(1000)
+    #         loop = QEventLoop()
+    #         loop.exec_()
 
 class SerialThread(QtCore.QThread):
+
     def __init__(self, port_name, buad_rate):
         QtCore.QThread.__init__(self)
         self.port_name = port_name
         self.buad_rate = buad_rate
         self.transmit = Queue.Queue()
         self.serial_running = True
+        self.np_data = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9])
 
     def write_data(self, data_string):
         data = data_string.encode('utf-8')
         self.serial_connection.write(data)
 
-    def serial_in(self, data_to_read):
-        display(data_to_read)
-
     def run(self):
-        self.np_data = np.array([1, 2, 3, 4, 5, 6, 7])
+        self.np_data = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9])
         try:
             self.serial_connection = serial.Serial(self.port_name, self.buad_rate, timeout=3)
-
-            # time.sleep(3 *1.2)
-            # self.serial_connection.flushInput()
         except:
             # self.serial_running = True
             self.serial_connection = None
@@ -49,8 +74,7 @@ class SerialThread(QtCore.QThread):
             self.serial_running = False
 
         while self.serial_running:
-
-            self.raw_data = bytearray(7*4)
+            self.raw_data = bytearray(9*4)
             self.serial_connection.readinto(self.raw_data)
             line = np.frombuffer(bytes(self.raw_data), dtype='<f4')
 
@@ -58,7 +82,7 @@ class SerialThread(QtCore.QThread):
             if np.array_equal(last_line, line) == False:
                 self.np_data = np.vstack((self.np_data, line))
                 print(line)
-                print(self.raw_data)
+                # print(self.raw_data)
 
         if self.serial_connection:
             self.serial_connection.close()
@@ -71,27 +95,26 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         Ui_MainWindow.__init__(self)
 
         self.setupUi(self)
-        self.serial_thread = SerialThread(port_name, baud_rate)
-        self.serial_thread.start()
-        self.update_status("iSpectro Loaded\nWelcome")
 
-        # sets data for plot
+
+        self.update_status("iSpectro Loaded -- Welcome")
         self.plot1_graphicsView.setDownsampling(mode='peak')
         self.plot1_graphicsView.setClipToView(True)
 
-        plot = self.plot1_graphicsView.plot()
-        self.data = np.empty(100)
-        self.ptr = 0
+        plot = self.plot1_graphicsView
 
-        # print start after clicking start
         self.start_QPushButton.clicked.connect(self.start_sweep)
         self.stop_QPushButton.clicked.connect(self.stop_sweep)
 
-        # refresh timer creation
         self.timer = pg.QtCore.QTimer()
         self.timer.start(250)
-        self.connect_pushButton.clicked.connect(self.update_data)
-        # self.connect()
+        self.timer.timeout.connect(self.update)
+
+        self.serial_thread = SerialThread(port_name, baud_rate)
+        self.serial_thread.start()
+
+        # self.graph_thread = SerialGraphThread(connection_object=self.serial_thread.np_data, plot1_graphicsView=plot)
+        # self.graph_thread.start()
 
     def write(self, text):  # Handle sys.stdout.write: update display
         self.text_update.emit(text)  # Send signal to synchronise call with main thread
@@ -99,26 +122,29 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def start_sweep(self):
         self.serial_thread.write_data('59330')
         self.update_status("Sweep Started")
-        self.timer.timeout.connect(self.update_data)
+        # self.graphthread.start()
 
     def stop_sweep(self):
         self.serial_thread.write_data('7742')
-        # self.arduino_connection.write_data('7742')
         self.update_status("Sweep Aborted")
 
     def update_status(self, text):
         self.bottom_textBrowser.append(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S -- ') +text)
 
     def update_data(self):
+        pass
+
+    def update(self):
+        # self.graphthread.start()
+
 
         i =+ 1
         spots3 = []
-        if np.alen(self.serial_thread.np_data[1:,0]) > 1:
+
         # self.plot1_graphicsView.plot().setData(x=self.arduino_connection.np_data[1:,0],y=self.arduino_connection.np_data[1:,7], pen=None, symbol='x')
-            for i in range(np.alen(self.serial_thread.np_data[1:,0])):
-                for j in range(np.alen(self.serial_thread.np_data[1:,6])):
-                    spots3.append({'pos': (self.serial_thread.np_data[-1:,1], self.serial_thread.np_data[-1,2]),
-                                   'brush': pg.intColor(i, 120)})
+        for i in range(np.alen(self.serial_thread.np_data[1:,])):
+            spots3.append({'pos': (self.serial_thread.np_data[-1:,5], self.serial_thread.np_data[-1,6]),
+                           'brush': pg.intColor(i, 120)})
 
         view = self.plot1_graphicsView
         s3 = pg.ScatterPlotItem()  ## Set pxMode=False to allow spots to transform with the view
