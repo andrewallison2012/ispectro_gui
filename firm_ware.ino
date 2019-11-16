@@ -308,100 +308,7 @@ void reset(){
 // 1  1  1  1  1  1  1  1
 // 0  0  0  1  1  0  0  0 reset
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//  RUN SWEEP
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-void runSweepOFF() {
-  short re;
-  short img;
-  double freq;
-  double kfreq;
-  double mag;
-  double phase;
-  double phasei;
-  double phasex;
-  double phasey;
-  double gain;
-  double impedance;
-  double sys_phase;
-  int flop=0;
-  int i=0;
-  int gf=1;
-  double f;
-  double x;
-  double y;
-  double t;
-  double xcal;
-  double ycal;
-  double flag_float;
-  programReg();
-
-
-  LED(true);
-  AD8130(true);
-  ADG774('A');
-  ADG1608_RC(0);
-  ADG1608_GAIN(1);
-  ADG1608_RFB(1);
-
-  delay(500);
-
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0xB0); // 1. Standby '10110000' Mask D8-10 of avoid tampering with gains
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x10); // 2. Initialize sweep
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x20); // 3. Start sweep
-
-  while((readData(STATUS_REG) & 0x07) < 4 ) {  // Check that status reg != 4, sweep not complete
-    delay(1000); // delay between measurements
-    int flag = readData(STATUS_REG)& 2;
-    if (flag==2) {
-
-        freq = start_freq + i*incre_freq;
-        freq = freq/1000;
-        double f = freq * 1.0;
-
-        byte R1 = readData(RE_DATA_R1);
-        byte R2 = readData(RE_DATA_R2);
-        re = (R1 << 8) | R2;
-        R1  = readData(IMG_DATA_R1);
-        R2  = readData(IMG_DATA_R2);
-        img = (R1 << 8) | R2;
-        double x = (double)re * 1.0;
-        double y = (double)img * 1.0;
-        R1 = readData(RE_DATA_R1);
-        R2 = readData(RE_DATA_R2);
-        re = (R1 << 8) | R2;
-        R1  = readData(IMG_DATA_R1);
-        R2  = readData(IMG_DATA_R2);
-        img = (R1 << 8) | R2;
-        double xcal = (double)re * 1.0;
-        double ycal = (double)img * 1.0;
-        double t = measureTemperatureDouble();
-        t = (double)t * 1.0;
-
-        flag_float = (double)flag;
-        sendToPC(&f, &x, &y,  &xcal, &ycal, &t, &flag_float);
-
-        if((readData(STATUS_REG) & 0x07) < 4 ){ //Increment frequency
-           writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x30); // increment
-           i++;
-           gf++;
-           flop = 0;
-         }
-
-      //digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
-    }
-  }
-//  writeData(CTRL_REG,0xA0);
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0xA0); //Power down
-
-  delay(2000);
-  allLOW();
-
-}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -432,6 +339,8 @@ void runSweep() {
 
   double xcal;
   double ycal;
+  double xccal;
+  double yccal;
 
   double t;
   double flag_float;
@@ -483,9 +392,32 @@ void runSweep() {
       }
       if (flag==2) {
         if (flop==1) {
+              ADG774('B'); // shifts leads to internal calibration circuit
+              ADG1608_RC(4); // shifts to R73 (1001 1k resistor)
+              delay(1000); // wait for 10 ms
+
+              byte R1 = readData(RE_DATA_R1);
+              byte R2 = readData(RE_DATA_R2);
+              re = (R1 << 8) | R2;
+              R1  = readData(IMG_DATA_R1);
+              R2  = readData(IMG_DATA_R2);
+              img = (R1 << 8) | R2;
+              xccal = (double)re * 1.0;
+              yccal = (double)img * 1.0;
+              delay(150);
+              t = measureTemperatureDouble();
+              t = (double)t * 1.0;
+              flag_float = (double)flag;
+        if((readData(STATUS_REG) & 0b111) < 0b100 ){ //Increment frequency
+          writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x40); // repeats
+          flop = 2; // i++;
+          flag = readData(STATUS_REG)& 0b10;
+          }
+      }
+        if (flop==2) {
             ADG774('B'); // shifts leads to internal calibration circuit
             ADG1608_RC(1); // shifts to R73 (1001 1k resistor)
-            delay(100); // wait for 10 ms
+            delay(1000); // wait for 10 ms
 
             byte R1 = readData(RE_DATA_R1);
             byte R2 = readData(RE_DATA_R2);
@@ -499,7 +431,7 @@ void runSweep() {
             t = measureTemperatureDouble();
             t = (double)t * 1.0;
             flag_float = (double)flag;
-            sendToPC(&f, &x, &y,  &xcal, &ycal, &t, &flag_float);
+            sendToPC(&f, &x, &y,  &xcal, &ycal, &xccal, &yccal, &t, &flag_float);
       }
         if((readData(STATUS_REG) & 0b111) < 0b100 ){ //Increment frequency
            writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x30); // increment
@@ -654,7 +586,7 @@ void sendToPC(int* data1, int* data2, int* data3)
 }
 
 
-void sendToPC(double* data1, double* data2, double* data3, double* data4, double* data5, double* data6, double* data7)
+void sendToPC(double* data1, double* data2, double* data3, double* data4, double* data5, double* data6, double* data7, double* data8, double* data9)
 {
   byte* byteData1 = (byte*)(data1);
   byte* byteData2 = (byte*)(data2);
@@ -663,14 +595,18 @@ void sendToPC(double* data1, double* data2, double* data3, double* data4, double
   byte* byteData5 = (byte*)(data5);
   byte* byteData6 = (byte*)(data6);
   byte* byteData7 = (byte*)(data7);
-  byte buf[28] = {byteData1[0], byteData1[1], byteData1[2], byteData1[3],
+  byte* byteData8 = (byte*)(data8);
+  byte* byteData9 = (byte*)(data9);
+  byte buf[36] = {byteData1[0], byteData1[1], byteData1[2], byteData1[3],
                  byteData2[0], byteData2[1], byteData2[2], byteData2[3],
                  byteData3[0], byteData3[1], byteData3[2], byteData3[3],
                  byteData4[0], byteData4[1], byteData4[2], byteData4[3],
                  byteData5[0], byteData5[1], byteData5[2], byteData5[3],
                  byteData6[0], byteData6[1], byteData6[2], byteData6[3],
-                 byteData7[0], byteData7[1], byteData7[2], byteData7[3]};
-  Serial.write(buf, 28);
+                 byteData7[0], byteData7[1], byteData7[2], byteData7[3],
+                 byteData8[0], byteData8[1], byteData8[2], byteData8[3],
+                 byteData9[0], byteData9[1], byteData9[2], byteData9[3]};
+  Serial.write(buf, 36);
 }
 
 
