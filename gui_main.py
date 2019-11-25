@@ -62,6 +62,31 @@ class SerialThread(QtCore.QThread):
         data = data_string.encode('utf-8')
         self.serial_connection.write(data)
 
+    def angle_calc(self, real, imaginary):
+        pi = np.pi
+        phase = 0
+        theta = 0
+
+        if real > 0 and imaginary > 0:  # 1st
+            theta = np.arctan(imaginary / real)
+            phase = (theta * 180) / pi
+
+        if real < 0 and imaginary > 0:  # 2nd
+            theta = pi + np.arctan(imaginary / real)
+            phase = (theta * 180) / pi
+
+        if real < 0 and imaginary < 0:  # 3rd
+            theta = pi + np.arctan(imaginary / real)
+            phase = (theta * 180) / pi
+
+        if real > 0 and imaginary < 0:  # 4th
+            theta = 2*(pi) + np.arctan(imaginary / real)
+            phase = (theta * 180) / pi
+
+        print(theta)
+        print(phase)
+
+
     def run(self):
         self.np_data = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9])
         try:
@@ -82,7 +107,7 @@ class SerialThread(QtCore.QThread):
             if np.array_equal(last_line, line) == False:
                 self.np_data = np.vstack((self.np_data, line))
                 print(line)
-                # print(self.raw_data)
+                self.angle_calc(line[5], line[6])
 
         if self.serial_connection:
             self.serial_connection.close()
@@ -95,7 +120,6 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         Ui_MainWindow.__init__(self)
 
         self.setupUi(self)
-
 
         self.update_status("iSpectro Loaded -- Welcome")
         self.plot1_graphicsView.setDownsampling(mode='peak')
@@ -140,16 +164,44 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         i =+ 1
         spots3 = []
+        # pi = 3.14
 
         # self.plot1_graphicsView.plot().setData(x=self.arduino_connection.np_data[1:,0],y=self.arduino_connection.np_data[1:,7], pen=None, symbol='x')
         for i in range(np.alen(self.serial_thread.np_data[1:,])):
             spots3.append({'pos': (self.serial_thread.np_data[-1:,5], self.serial_thread.np_data[-1,6]),
                            'brush': pg.intColor(i, 120)})
 
+
         view = self.plot1_graphicsView
         s3 = pg.ScatterPlotItem()  ## Set pxMode=False to allow spots to transform with the view
         s3.addPoints(spots3)
         view.addItem(s3)
+
+        #
+        # data = [round(data_point, 2) for data_point in spots3]
+        #
+        # frequency = data[0]
+        # real = data[1]
+        # imaginary = data[2]
+        # real = data[3]
+        # imaginary = data[4]
+        # real = data[5]
+        # imaginary = data[6]
+        # temperature = data[7]
+        # status = data[8]
+        #
+        # if real > 0 and imaginary > 0:  # positive positive
+        #     phase = round(np.arctan(real / imaginary) * (180 / pi),2)
+        #
+        # if real < 0 and imaginary > 0:  # negative positive
+        #     phase = round(180 + (np.arctan(real / imaginary) * (180 / pi)),2)
+        #
+        # if real < 0 and imaginary < 0:  # negative negative
+        #     phase = round(180 + (np.arctan(real / imaginary) * (180 / pi)),2)
+        #
+        # if real > 0 and imaginary < 0:  # positive negative
+        #     phase = round(180 + (np.arctan(real / imaginary) * (180 / pi)),2)
+
 
 if __name__ == "__main__":
 
