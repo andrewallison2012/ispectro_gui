@@ -185,8 +185,6 @@ void runSweep() {
   // run while the Status register says that the sweep is not complete
   while((readData(Status_D7_to_D0) & 0b111) < 0b100 ) {  // reads Status Register, to see if D2 is less than 1 (i.e. 0), 0 in at D2 in this register ('Status Register') indicates that the frequency sweep is complete
     delay(1000); // delay between measurements
-    getDataFromUSB();
-    variableUpdateFuntion();
 
     int dataAvaliable = readData(Status_D7_to_D0) & 0b10; // reads Status Register, uses an and '&' bit wise operator to see if the register is equal to 1 at the D1 bit, this indicates if there is valid real or imaginary data is avaliable
     if (dataAvaliable == 2) {
