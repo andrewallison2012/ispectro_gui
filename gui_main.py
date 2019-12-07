@@ -7,7 +7,7 @@ import queue as Queue
 import serial
 from PyQt5.QtCore import QThread, QTimer, QEventLoop, pyqtSignal
 
-port_name ="/dev/ttyACM0"
+port_name ="/dev/ttyACM2"
 baud_rate = 38400
 
 qtcreator_file  = "ispectro_xml.ui" # Enter file here, this is generated with qt creator or desinger
@@ -144,12 +144,12 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.text_update.emit(text)  # Send signal to synchronise call with main thread
 
     def start_sweep(self):
-        self.serial_thread.write_data('59330')
+        self.serial_thread.write_data('<RUN>')
         self.update_status("Sweep Started")
         # self.graphthread.start()
 
     def stop_sweep(self):
-        self.serial_thread.write_data('7742')
+        self.serial_thread.write_data('<STOP>')
         self.update_status("Sweep Aborted")
 
     def update_status(self, text):
