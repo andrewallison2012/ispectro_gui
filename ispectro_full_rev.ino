@@ -194,7 +194,7 @@ void runSweep() {
 
       if (scanNumberAtFrequency == 1) {
         ADG774('A'); // shifts leads to external lead circuit
-        delay(1000); // wait for 1000 ms
+        delay(333); // wait for 1000 ms
 
         readRealandImg();
         x = (double)re * 1.0;
@@ -211,7 +211,7 @@ void runSweep() {
       if (scanNumberAtFrequency == 2) {
         ADG774('B'); // shifts leads to internal calibration circuit
         ADG1608_RC(first_calibration_state); // shifts to R73 (1001 1k resistor)
-        delay(1000); // wait for 1000 ms
+        delay(333); // wait for 1000 ms
 
         readRealandImg();
         xccal = (double)re * 1.0;
@@ -228,7 +228,7 @@ void runSweep() {
         if (scanNumberAtFrequency == 3) {
           ADG774('B'); // shifts leads to internal calibration circuit
           ADG1608_RC(second_calibration_state); // shifts to R73 (1001 1k resistor)
-          delay(1000); // wait for 10 ms
+          delay(333); // wait for 10 ms
 
           readRealandImg();
           xcal = (double)re * 1.0;
