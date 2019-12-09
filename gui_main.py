@@ -158,7 +158,7 @@ class SerialThread(QtCore.QThread):
             line = np.frombuffer(bytes(self.raw_data), dtype='<f4')
 
             last_line = self.np_data[-1]
-            if np.array_equal(last_line, line) == False:
+            if (np.array_equal(last_line, line) == False) and (line[8] == 1.0):
                 self.np_data = np.vstack((self.np_data, line))
                 print(line)
                 self.data_processing(line[1], line[2], line[3], line[4])

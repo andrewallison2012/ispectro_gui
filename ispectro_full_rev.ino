@@ -47,7 +47,7 @@ byte incomingByte;
 short re;
 short img;
 
-double freq;
+double Current_Frequency;
 double kfreq;
 double mag;
 double phase;
@@ -62,6 +62,7 @@ int scanNumberAtFrequency = 1;
 int i=0;
 int gf=1;
 
+double sweepUnderWay = 0.0;
 double f;
 double x;
 double y;
@@ -72,7 +73,6 @@ double xccal;
 double yccal;
 
 double t;
-double dataAvaliable_float;
 
 const float external_clock = 16000000.0; // 16 Mhz external clock frequency
 const float Start_Frequency = 1000.0; // 1kHz starting frequency
@@ -184,82 +184,78 @@ void runSweep() {
 
   // run while the Status register says that the sweep is not complete
   while((readData(Status_D7_to_D0) & 0b111) < 0b100 ) {  // reads Status Register, to see if D2 is less than 1 (i.e. 0), 0 in at D2 in this register ('Status Register') indicates that the frequency sweep is complete
-    delay(1000); // delay between measurements
-
+    // delay(1000); // delay between measurements
     int dataAvaliable = readData(Status_D7_to_D0) & 0b10; // reads Status Register, uses an and '&' bit wise operator to see if the register is equal to 1 at the D1 bit, this indicates if there is valid real or imaginary data is avaliable
+    Current_Frequency = Start_Frequency + i*Increment_Frequency;
+    Current_Frequency = Current_Frequency/1000;
+    double f = Current_Frequency * 1.0;
+
     if (dataAvaliable == 2) {
 
-        freq = Start_Frequency + i*Increment_Frequency;
-        freq = freq/1000;
-        double f = freq * 1.0;
-
       if (scanNumberAtFrequency == 1) {
-        delay(100);
-
         ADG774('A'); // shifts leads to external lead circuit
+        delay(300); // wait for 1000 ms
 
         readRealandImg();
-
         x = (double)re * 1.0;
         y = (double)img * 1.0;
 
-      if((readData(Status_D7_to_D0) & 0b111) < 0b100 ){ //Increment frequency
-        writeData(Control_D15_to_D8,(readData(Control_D15_to_D8) & 0x07) | 0x40); // repeats
-        scanNumberAtFrequency = 2; // i++;
-        dataAvaliable = readData(Status_D7_to_D0)& 0b10;
-        }
-      }
-      if (dataAvaliable == 2) {
-        if (scanNumberAtFrequency == 2) {
+          if((readData(Status_D7_to_D0) & 0b111) < 0b100 ){
+            writeData(Control_D15_to_D8,(readData(Control_D15_to_D8) & 0b111) | 0b1000000); // repeats at current frequency
+            scanNumberAtFrequency = 2; // i++;
+            dataAvaliable = readData(Status_D7_to_D0)& 0b10;
 
-              ADG774('B'); // shifts leads to internal calibration circuit
-              ADG1608_RC(first_calibration_state); // shifts to R73 (1001 1k resistor)
-              delay(1000); // wait for 10 ms
+            }
+          }
 
-              readRealandImg();
+      if (scanNumberAtFrequency == 2) {
+        ADG774('B'); // shifts leads to internal calibration circuit
+        ADG1608_RC(first_calibration_state); // shifts to R73 (1001 1k resistor)
+        delay(300); // wait for 1000 ms
 
-              xccal = (double)re * 1.0;
-              yccal = (double)img * 1.0;
-              delay(150);
+        readRealandImg();
+        xccal = (double)re * 1.0;
+        yccal = (double)img * 1.0;
+        delay(150);
 
-              t = measureTemperatureDouble();
-              t = (double)t * 1.0;
-              dataAvaliable_float = (double)dataAvaliable;
-
-        if((readData(Status_D7_to_D0) & 0b111) < 0b100 ){ //Increment frequency
-          writeData(Control_D15_to_D8,(readData(Control_D15_to_D8) & 0x07) | 0x40); // repeats
+        if((readData(Status_D7_to_D0) & 0b111) < 0b100){
+          writeData(Control_D15_to_D8,(readData(Control_D15_to_D8) & 0b111) | 0b1000000); // repeats at current frequency
           scanNumberAtFrequency = 3; // i++;
           dataAvaliable = readData(Status_D7_to_D0)& 0b10;
+
           }
-      }
-        if (scanNumberAtFrequency == 3) {
-            ADG774('B'); // shifts leads to internal calibration circuit
-            ADG1608_RC(second_calibration_state); // shifts to R73 (1001 1k resistor)
-            delay(1000); // wait for 10 ms
-
-            readRealandImg();
-
-            xcal = (double)re * 1.0;
-            ycal = (double)img * 1.0;
-            delay(150);
-
-            t = measureTemperatureDouble();
-            t = (double)t * 1.0;
-            dataAvaliable_float = (double)dataAvaliable;
-            sendToPC(&f, &x, &y,  &xcal, &ycal, &xccal, &yccal, &t, &dataAvaliable_float);
-      }
-        if((readData(Status_D7_to_D0) & 0b111) < 0b100 ){ //Increment frequency
-           writeData(Control_D15_to_D8,(readData(Control_D15_to_D8) & 0x07) | 0x30); // increment
-           i++;
-           gf++;
-           scanNumberAtFrequency = 1;
         }
-      }
-    }
-  }
-  writeData(Control_D15_to_D8,(readData(Control_D15_to_D8) & 0x07) | 0xA0); //Power down
-  LED(false);
-}
+
+        if (scanNumberAtFrequency == 3) {
+          ADG774('B'); // shifts leads to internal calibration circuit
+          ADG1608_RC(second_calibration_state); // shifts to R73 (1001 1k resistor)
+          delay(300); // wait for 10 ms
+
+          readRealandImg();
+          xcal = (double)re * 1.0;
+          ycal = (double)img * 1.0;
+          t = measureTemperatureDouble();
+          t = (double)t * 1.0;
+          delay(150);
+
+          sendToPC(&f, &x, &y,  &xcal, &ycal, &xccal, &yccal, &t, &sweepUnderWay);
+
+          if((readData(Status_D7_to_D0) & 0b111) < 0b100){
+            writeData(Control_D15_to_D8,(readData(Control_D15_to_D8) & 0b111) | 0b1000000); // increments to next frequency
+            i++;
+            gf++;
+            scanNumberAtFrequency = 1;
+
+            }
+          }
+
+        } // close dataAvaliable if statement
+
+    } // close while
+
+  endSweep();
+
+} // close runSweep() function
 
 
 
@@ -662,17 +658,12 @@ void ADG1608_RFB(int route){
       }
   }
 
-//void resetAD5933() {
-//  writeData(Control_D7_to_D0,0b11000); // reset
-//  writeData(Control_D7_to_D0,0b10110001); // standby mode
-//  setAD5933();
-//}
-
 void setAD5933() {
   writeData(Control_D15_to_D8,0b0);   //nop - clear ctrl-reg
   writeData(Control_D7_to_D0,0b10000);   //reset ctrl register
   writeData(Control_D15_to_D8,(readData(Control_D15_to_D8) & 0x07) | 0xA0); //Power down
   LED(false);
+  AD8130(false); // disable AD8130, constant current source
 }
 
 void configAD5933() {
@@ -695,12 +686,21 @@ void configAD5933() {
   }
 
 void initializeSweep() {
+  AD8130(true); // enable AD8130, constant current source
   writeData(Control_D15_to_D8,(readData(Control_D15_to_D8) & 0b111) | 0b10110000); // standby
   writeData(Control_D15_to_D8,(readData(Control_D15_to_D8) & 0b111) | 0b10000); //  initialize
   writeData(Control_D15_to_D8,(readData(Control_D15_to_D8) & 0b111) | 0b100000); // start
-
+  sweepUnderWay = 1.0;
+  Current_Frequency = 0.0;
+  f = 0.0;
 }
 
+void endSweep() {
+  AD8130(false); // disable AD8130, constant current source
+  writeData(Control_D15_to_D8,(readData(Control_D15_to_D8) & 0b111) | 0b10100000); // power down AD5933
+  sweepUnderWay = 0.0;
+  LED(false);
+}
 
 byte Frequency_Code(float start_frequency, int state) {
   long calculated_value = long((start_frequency/(external_clock/4)) * pow(2,27));
@@ -787,4 +787,3 @@ void sendToPC(int* data1, int* data2, int* data3) {
                  byteData3[0], byteData3[1]};
   Serial.write(buf, 6);
 }
-
