@@ -194,7 +194,7 @@ void runSweep() {
 
       if (scanNumberAtFrequency == 1) {
         ADG774('A'); // shifts leads to external lead circuit
-        delay(300); // wait for 1000 ms
+        delay(1000); // wait for 1000 ms
 
         readRealandImg();
         x = (double)re * 1.0;
@@ -211,12 +211,11 @@ void runSweep() {
       if (scanNumberAtFrequency == 2) {
         ADG774('B'); // shifts leads to internal calibration circuit
         ADG1608_RC(first_calibration_state); // shifts to R73 (1001 1k resistor)
-        delay(300); // wait for 1000 ms
+        delay(1000); // wait for 1000 ms
 
         readRealandImg();
         xccal = (double)re * 1.0;
         yccal = (double)img * 1.0;
-        delay(150);
 
         if((readData(Status_D7_to_D0) & 0b111) < 0b100){
           writeData(Control_D15_to_D8,(readData(Control_D15_to_D8) & 0b111) | 0b1000000); // repeats at current frequency
@@ -229,19 +228,18 @@ void runSweep() {
         if (scanNumberAtFrequency == 3) {
           ADG774('B'); // shifts leads to internal calibration circuit
           ADG1608_RC(second_calibration_state); // shifts to R73 (1001 1k resistor)
-          delay(300); // wait for 10 ms
+          delay(1000); // wait for 10 ms
 
           readRealandImg();
           xcal = (double)re * 1.0;
           ycal = (double)img * 1.0;
           t = measureTemperatureDouble();
           t = (double)t * 1.0;
-          delay(150);
 
           sendToPC(&f, &x, &y,  &xcal, &ycal, &xccal, &yccal, &t, &sweepUnderWay);
 
           if((readData(Status_D7_to_D0) & 0b111) < 0b100){
-            writeData(Control_D15_to_D8,(readData(Control_D15_to_D8) & 0b111) | 0b1000000); // increments to next frequency
+            writeData(Control_D15_to_D8,(readData(Control_D15_to_D8) & 0b111) | 0b110000); // increments to next frequency
             i++;
             gf++;
             scanNumberAtFrequency = 1;
