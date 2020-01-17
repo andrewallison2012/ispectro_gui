@@ -7,10 +7,8 @@ import queue as Queue
 import serial
 from PyQt5.QtCore import QThread, QTimer, QEventLoop, pyqtSignal
 
-port_name ="/dev/ttyACM0"
+port_name ="COM4"
 baud_rate = 38400
-
-
 
 qtcreator_file  = "ispectro_xml.ui" # Enter file here, this is generated with qt creator or desinger
 Ui_MainWindow, QtBaseClass = uic.loadUiType(qtcreator_file)
@@ -60,6 +58,7 @@ class SerialThread(QtCore.QThread):
         self.serial_running = True
         self.np_data = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9])
         self.data_set = np.array([0, 1])
+        self.temp_data = np.array([0, 1])
 
     def write_data(self, data_string):
         data = data_string.encode('utf-8')
@@ -139,7 +138,12 @@ class SerialThread(QtCore.QThread):
         string_to_print = f'calibrated impedace magnitude: {impedance}\ntheta: {theta}\nz_real: {z_real}\nz_imaginary: {z_imaginary}'
         self.data_set = np.vstack((self.data_set, np.array([z_real,z_imaginary])))
         return self.data_set
-        print(string_to_print)
+        QtWidgets.QApplication.processEvents()
+
+    def temp_processing(self, freq, temp):
+        self.temp_data = np.vstack((self.temp_data, np.array([freq, temp])))
+        return self.temp_data
+        QtWidgets.QApplication.processEvents()
 
     def run(self):
         self.np_data = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9])
@@ -162,6 +166,7 @@ class SerialThread(QtCore.QThread):
                 self.np_data = np.vstack((self.np_data, line))
                 print(line)
                 self.data_processing(line[1], line[2], line[3], line[4])
+                self.temp_processing(line[0], line[7])
 
         if self.serial_connection:
             self.serial_connection.close()
@@ -174,16 +179,26 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         Ui_MainWindow.__init__(self)
 
         self.setupUi(self)
-        self.update_status("iSpectro Loaded -- Welcome")
+        self.update_status("iSpectro Loaded -- Welcome Please Press 'Connect'")
+
         self.plot1_graphicsView.setDownsampling(mode='peak')
         self.plot1_graphicsView.setClipToView(True)
 
+        self.temp_graphicsView.setDownsampling(mode='peak')
+        self.temp_graphicsView.setClipToView(True)
 
         self.plot1_graphicsView.showGrid(x=True, y=True)
+
         self.plot1_graphicsView.setTitle(title="Impedance Z")
         self.plot1_graphicsView.setLabel('left',text= 'Ohms (imaginary)')
         self.plot1_graphicsView.setLabel('bottom',text='Ohms (real)')
 
+        self.temp_graphicsView.showGrid(x=True, y=True)
+        self.temp_graphicsView.hideAxis('bottom')
+
+        # self.temp_graphicsView.setTitle(title="Internal Device Temperature")
+        # self.temp_graphicsView.setLabel('bottom',text= 'Time (s.)')
+        self.temp_graphicsView.setLabel('left',text='Temp (C)')
 
         self.start_QPushButton.clicked.connect(self.start_sweep)
         self.stop_QPushButton.clicked.connect(self.stop_sweep)
@@ -193,18 +208,12 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.timer.start(250)
         self.timer.timeout.connect(self.update)
 
-
-
-        # self.graph_thread = SerialGraphThread(connection_object=self.serial_thread.np_data, plot1_graphicsView=plot)
-        # self.graph_thread.start()
-
     def write(self, text):  # Handle sys.stdout.write: update display
         self.text_update.emit(text)  # Send signal to synchronise call with main thread
 
     def start_sweep(self):
         self.serial_thread.write_data('<RUN>')
         self.update_status("Sweep Started")
-        # self.graphthread.start()
 
     def stop_sweep(self):
         self.serial_thread.write_data('<STOP>')
@@ -213,6 +222,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def connect(self):
         self.serial_thread = SerialThread(port_name, baud_rate)
+        self.update_status("Connected")
         self.serial_thread.start()
 
     def update_status(self, text):
@@ -222,17 +232,16 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         pass
 
     def update(self):
-        # self.graphthread.start()
-
-
+        global ptr1, spots3
         i =+ 1
         spots3 = []
-        # pi = 3.14
+        spots2 = []
 
-        # self.plot1_graphicsView.plot().setData(x=self.arduino_connection.np_data[1:,0],y=self.arduino_connection.np_data[1:,7], pen=None, symbol='x')
         for i in range(np.alen(self.serial_thread.data_set[1:,])):
             spots3.append({'pos': (self.serial_thread.data_set[-1:,0], self.serial_thread.data_set[-1,1]),
-                           'brush': pg.intColor(i, 120, alpha = 20), 'pen': pg.mkPen(None), 'size': 5})
+                           'brush': pg.intColor(i, 120, alpha = 20), 'pen': pg.mkPen(None), 'size': 3})
+            spots2.append({'pos': (self.serial_thread.temp_data[-1:,0], self.serial_thread.temp_data[-1,1]),
+                           'brush': pg.intColor(i, 120, alpha = 20), 'pen': pg.mkPen(None), 'size': 3})
 
 
         view = self.plot1_graphicsView
@@ -240,31 +249,12 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         s3.addPoints(spots3)
         view.addItem(s3)
 
-        #
-        # data = [round(data_point, 2) for data_point in spots3]
-        #
-        # frequency = data[0]
-        # real = data[1]
-        # imaginary = data[2]
-        # real = data[3]
-        # imaginary = data[4]
-        # real = data[5]
-        # imaginary = data[6]
-        # temperature = data[7]
-        # status = data[8]
-        #
-        # if real > 0 and imaginary > 0:  # positive positive
-        #     phase = round(np.arctan(real / imaginary) * (180 / pi),2)
-        #
-        # if real < 0 and imaginary > 0:  # negative positive
-        #     phase = round(180 + (np.arctan(real / imaginary) * (180 / pi)),2)
-        #
-        # if real < 0 and imaginary < 0:  # negative negative
-        #     phase = round(180 + (np.arctan(real / imaginary) * (180 / pi)),2)
-        #
-        # if real > 0 and imaginary < 0:  # positive negative
-        #     phase = round(180 + (np.arctan(real / imaginary) * (180 / pi)),2)
+        view2 = self.temp_graphicsView
+        s2 = pg.ScatterPlotItem()
+        s2.addPoints(spots2)
+        view2.addItem(s2)
 
+        QtWidgets.QApplication.processEvents()
 
 if __name__ == "__main__":
 
@@ -272,3 +262,4 @@ if __name__ == "__main__":
     window = MyWindow()
     window.show()
     sys.exit(app.exec_())
+

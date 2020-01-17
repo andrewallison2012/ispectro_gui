@@ -27,6 +27,62 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_2">
+    <item row="1" column="3">
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="6" column="0" alignment="Qt::AlignRight">
+       <widget class="QPushButton" name="connect_pushButton">
+        <property name="maximumSize">
+         <size>
+          <width>200</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>connect</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QTextBrowser" name="bottom_textBrowser">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>98</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="PlotWidget" name="plot1_graphicsView">
+        <property name="minimumSize">
+         <size>
+          <width>800</width>
+          <height>7</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <layout class="QVBoxLayout" name="verticalLayout_4"/>
+      </item>
+      <item row="3" column="0">
+       <widget class="PlotWidget" name="temp_graphicsView">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>98</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string/>
+        </property>
+        <property name="statusTip">
+         <string>Internal Device Temperature</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
     <item row="1" column="0">
      <layout class="QGridLayout" name="gridLayout_4">
       <item row="3" column="0" alignment="Qt::AlignTop">
@@ -595,43 +651,6 @@
       </item>
      </layout>
     </item>
-    <item row="1" column="3">
-     <layout class="QGridLayout" name="gridLayout">
-      <item row="1" column="0">
-       <widget class="PlotWidget" name="plot1_graphicsView">
-        <property name="minimumSize">
-         <size>
-          <width>800</width>
-          <height>7</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QTextBrowser" name="bottom_textBrowser">
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>98</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0" alignment="Qt::AlignRight">
-       <widget class="QPushButton" name="connect_pushButton">
-        <property name="maximumSize">
-         <size>
-          <width>200</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>connect</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -640,7 +659,7 @@
      <x>0</x>
      <y>0</y>
      <width>1110</width>
-     <height>27</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -692,6 +711,22 @@
     <hint type="destinationlabel">
      <x>696</x>
      <y>667</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>start_freq_spinBox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>progressBar</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>233</x>
+     <y>368</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>48</x>
+     <y>44</y>
     </hint>
    </hints>
   </connection>
