@@ -49,6 +49,7 @@ Ui_MainWindow, QtBaseClass = uic.loadUiType(qtcreator_file)
     #         loop.exec_()
 
 class SerialThread(QtCore.QThread):
+    my_signal = pyqtSignal()
 
     def __init__(self, port_name, buad_rate):
         QtCore.QThread.__init__(self)
@@ -167,6 +168,8 @@ class SerialThread(QtCore.QThread):
                 print(line)
                 self.data_processing(line[1], line[2], line[3], line[4])
                 self.temp_processing(line[0], line[7])
+                self.my_signal.emit()
+
 
         if self.serial_connection:
             self.serial_connection.close()
@@ -204,9 +207,10 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.stop_QPushButton.clicked.connect(self.stop_sweep)
         self.connect_pushButton.clicked.connect(self.connect)
 
-        self.timer = pg.QtCore.QTimer()
-        self.timer.start(250)
-        self.timer.timeout.connect(self.update)
+        # self.timer = pg.QtCore.QTimer()
+        # self.timer.start(250)
+        # self.timer.timeout.connect(self.update)
+
 
     def write(self, text):  # Handle sys.stdout.write: update display
         self.text_update.emit(text)  # Send signal to synchronise call with main thread
@@ -224,6 +228,8 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.serial_thread = SerialThread(port_name, baud_rate)
         self.update_status("Connected")
         self.serial_thread.start()
+        self.serial_thread.my_signal.connect(self.update)
+
 
     def update_status(self, text):
         self.bottom_textBrowser.append(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S -- ') +text)
