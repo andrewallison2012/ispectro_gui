@@ -83,6 +83,7 @@ int Sweep_delay = 333;
 boolean AD8130_STATE = true;
 char ADG774_STATE = 'A';
 
+int ADG1608_RC_STATE = 0;
 int ADG1608_GAIN_STATE = 1;
 int ADG1608_RFB_STATE = 1;
 
@@ -122,6 +123,8 @@ void setup() {
   Serial.println(AD8130_STATE);
   Serial.println("<ADG774,[1|2|0]> ");
   Serial.println(ADG774_STATE);
+  Serial.println("<ADG1608_RC,[0-8]> ");
+  Serial.println(ADG1608_RC_STATE);
   Serial.println("<ADG1608_GAIN,[0-8]> ");
   Serial.println(ADG1608_GAIN_STATE);
   Serial.println("<ADG1608_RFB,[0-8]> ");
@@ -187,6 +190,8 @@ void variableUpdateFuntion() {
       Serial.println(AD8130_STATE);
       Serial.println("ADG774_STATE: ");
       Serial.println(ADG774_STATE);
+      Serial.println("ADG1608_RC_STATE: ");
+      Serial.println(ADG1608_RC_STATE);
       Serial.println("ADG1608_GAIN_STATE: ");
       Serial.println(ADG1608_GAIN_STATE);
       Serial.println("ADG1608_RFB_STATE: ");
@@ -280,6 +285,14 @@ void variableUpdateFuntion() {
         Serial.print(ADG774_STATE);
       }
     }
+   if (strcmp(charactersFromPC,"ADG1608_RC") == 0) { // strcmp() compares array of charactersFromPC to "LED2" and returns number of differnt characters if 0 then they match and expression returns true
+    if (newInput) {
+      ADG1608_RC_STATE = passedInt;
+      ADG1608_RC(ADG1608_RC_STATE);
+      Serial.print("ADG1608_RC: ");
+      Serial.print(ADG1608_RC_STATE);
+      }
+    }
    if (strcmp(charactersFromPC,"ADG1608_GAIN") == 0) { // strcmp() compares array of charactersFromPC to "LED2" and returns number of differnt characters if 0 then they match and expression returns true
     if (newInput) {
       ADG1608_GAIN_STATE = passedInt;
@@ -310,7 +323,7 @@ void runSweep() {
   LED(true);
   AD8130(AD8130_STATE);
   ADG774(ADG774_STATE);
-  ADG1608_RC(0);
+  ADG1608_RC(ADG1608_RC_STATE);
   ADG1608_GAIN(ADG1608_GAIN_STATE);
   ADG1608_RFB(ADG1608_RFB_STATE);
   delay(500);
