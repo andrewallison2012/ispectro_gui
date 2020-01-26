@@ -75,12 +75,20 @@ double yccal;
 double t;
 
 const float external_clock = 16000000.0; // 16 Mhz external clock frequency
-const float Start_Frequency = 1000.0; // 1kHz starting frequency
-const float Increment_Frequency = 1000.0; // 1kHz step size
-const int Number_of_Increments = 99; // 99 steps
+float Start_Frequency = 1000.0; // 1kHz starting frequency
+float Increment_Frequency = 1000.0; // 1kHz step size
+int Number_of_Increments = 99; // 99 steps
+int Sweep_delay = 333;
+
+boolean AD8130_STATE = true;
+char ADG774_STATE = 'A';
+
+int ADG1608_GAIN_STATE = 1;
+int ADG1608_RFB_STATE = 1;
 
 int first_calibration_state = 4;
 int second_calibration_state = 1;
+int flash_delay = 1000;
 
 
 
@@ -101,6 +109,24 @@ void setup() {
   flashLED(3, 250); // flash the front led 3 times with 250ms between flashes, indicating pin setup complete
   delay(500); // wait 500ms for I/O pins to configure
   Serial.println("<Device Ready>"); // writes '<Device Ready>' to usb to tell computer setup is complete
+  Serial.println("--------------------");
+  Serial.println("COMMANDS: <RUN> <STOP> <VARIABLE BELOW,[int],[float]> see below for format");
+  Serial.println("--------------------");
+  Serial.println("<START_FREQUENCY,0,[1000.00-300000.00]> ");
+  Serial.println(Start_Frequency);
+  Serial.println("<INCREMENT_FREQUENCY,0,[0.00-10000.00]> ");
+  Serial.println(Increment_Frequency);
+  Serial.println("<NUMBER_OF_INCREMENTS,[1-300]> ");
+  Serial.println(Number_of_Increments);
+  Serial.println("<AD8130,[1|0]> ");
+  Serial.println(AD8130_STATE);
+  Serial.println("<ADG774,[1|2|0]> ");
+  Serial.println(ADG774_STATE);
+  Serial.println("<ADG1608_GAIN,[0-8]> ");
+  Serial.println(ADG1608_GAIN_STATE);
+  Serial.println("<ADG1608_RFB,[0-8]> ");
+  Serial.println(ADG1608_RFB_STATE);
+  Serial.println("--------------------");
 
 }
 
@@ -135,11 +161,13 @@ void loopFun() {
 void printStatus() {
   if (newInput) {
     newInput = false;
-    Serial.print(" < charactersFromPC: ");
-    Serial.print(charactersFromPC);
-    Serial.print(", passedInt: ");
-    Serial.print(passedInt);
-    Serial.println(" >");
+//    Serial.print(" < charactersFromPC: ");
+//    Serial.print(charactersFromPC);
+//    Serial.print(", passedInt: ");
+//    Serial.print(passedInt);
+//    Serial.print(", passedFloat: ");
+//    Serial.print(passedFloat);
+//    Serial.println(" >");
     }
   }
 
@@ -147,8 +175,23 @@ void printStatus() {
 void variableUpdateFuntion() {
   if (strcmp(charactersFromPC,"RUN") == 0) { // strcmp() compares array of charactersFromPC to "LED1" and returns number of differnt characters if 0 then they match and expression returns true
     if (newInput) {
+      Serial.println("--------------------");
+      Serial.println("Running with:");
+      Serial.println("START_FREQUENCY: ");
+      Serial.println(Start_Frequency);
+      Serial.println("INCREMENT_FREQUENCY: ");
+      Serial.println(Increment_Frequency);
+      Serial.println("NUMBER_OF_INCREMENTS: ");
+      Serial.println(Number_of_Increments);
+      Serial.println("AD8130_STATE: ");
+      Serial.println(AD8130_STATE);
+      Serial.println("ADG774_STATE: ");
+      Serial.println(ADG774_STATE);
+      Serial.println("ADG1608_GAIN_STATE: ");
+      Serial.println(ADG1608_GAIN_STATE);
+      Serial.println("ADG1608_RFB_STATE: ");
+      Serial.println(ADG1608_RFB_STATE);
       runSweep();
-
       }
     }
   if (strcmp(charactersFromPC,"STOP") == 0) { // strcmp() compares array of charactersFromPC to "LED2" and returns number of differnt characters if 0 then they match and expression returns true
@@ -160,6 +203,97 @@ void variableUpdateFuntion() {
     if (newInput) {
       setLED(false);
       Serial.print("led off");
+      }
+    }
+  if (strcmp(charactersFromPC,"LEDON") == 0) { // strcmp() compares array of charactersFromPC to "LED2" and returns number of differnt characters if 0 then they match and expression returns true
+    if (newInput) {
+      setLED(true);
+      Serial.print("led on");
+      }
+    }
+  if (strcmp(charactersFromPC,"LEDON") == 0) { // strcmp() compares array of charactersFromPC to "LED2" and returns number of differnt characters if 0 then they match and expression returns true
+    if (newInput) {
+      setLED(true);
+      Serial.print("led on");
+      }
+    }
+  if (strcmp(charactersFromPC,"FLASH") == 0) { // strcmp() compares array of charactersFromPC to "LED2" and returns number of differnt characters if 0 then they match and expression returns true
+    if (newInput) {
+      flashLED(passedInt, flash_delay);
+      Serial.print("flashing");
+      }
+    }
+  if (strcmp(charactersFromPC,"FLASH_DELAY") == 0) { // strcmp() compares array of charactersFromPC to "LED2" and returns number of differnt characters if 0 then they match and expression returns true
+    if (newInput) {
+      flash_delay = passedInt;
+      Serial.print("delay set to: ");
+      Serial.print(flash_delay);
+      }
+    }
+  if (strcmp(charactersFromPC,"START_FREQUENCY") == 0) { // strcmp() compares array of charactersFromPC to "LED2" and returns number of differnt characters if 0 then they match and expression returns true
+    if (newInput) {
+      Start_Frequency = passedFloat;
+      Serial.print("Start_Frequency set to: ");
+      Serial.print(Start_Frequency);
+      }
+    }
+   if (strcmp(charactersFromPC,"INCREMENT_FREQUENCY") == 0) { // strcmp() compares array of charactersFromPC to "LED2" and returns number of differnt characters if 0 then they match and expression returns true
+    if (newInput) {
+      Increment_Frequency = passedFloat;
+      Serial.print("Increment_Frequency set to: ");
+      Serial.print(Increment_Frequency);
+      }
+    }
+   if (strcmp(charactersFromPC,"NUMBER_OF_INCREMENTS") == 0) { // strcmp() compares array of charactersFromPC to "LED2" and returns number of differnt characters if 0 then they match and expression returns true
+    if (newInput) {
+      Number_of_Increments = passedInt;
+      Serial.print("Number_of_Increments set to: ");
+      Serial.print(Number_of_Increments);
+      }
+    }
+   if (strcmp(charactersFromPC,"AD8130") == 0) { // strcmp() compares array of charactersFromPC to "LED2" and returns number of differnt characters if 0 then they match and expression returns true
+    if (newInput) {
+      if (passedInt == 1) {
+        AD8130_STATE = true;
+      }
+      if (passedInt == 0) {
+        AD8130_STATE = false;
+      }
+        AD8130(AD8130_STATE);
+        Serial.print("AD8130: ");
+        Serial.print(AD8130_STATE);
+      }
+    }
+   if (strcmp(charactersFromPC,"ADG774") == 0) { // strcmp() compares array of charactersFromPC to "LED2" and returns number of differnt characters if 0 then they match and expression returns true
+    if (newInput) {
+      if (passedInt == 1) {
+        ADG774_STATE = 'A';
+      }
+      if (passedInt == 2) {
+        ADG774_STATE = 'B';
+      }
+      if (passedInt == 0) {
+        ADG774_STATE = 'Z';
+      }
+        ADG774(ADG774_STATE);
+        Serial.print("ADG774: ");
+        Serial.print(ADG774_STATE);
+      }
+    }
+   if (strcmp(charactersFromPC,"ADG1608_GAIN") == 0) { // strcmp() compares array of charactersFromPC to "LED2" and returns number of differnt characters if 0 then they match and expression returns true
+    if (newInput) {
+      ADG1608_GAIN_STATE = passedInt;
+      ADG1608_GAIN(ADG1608_GAIN_STATE);
+      Serial.print("ADG1608_GAIN: ");
+      Serial.print(ADG1608_GAIN_STATE);
+      }
+    }
+   if (strcmp(charactersFromPC,"ADG1608_RFB") == 0) { // strcmp() compares array of charactersFromPC to "LED2" and returns number of differnt characters if 0 then they match and expression returns true
+    if (newInput) {
+      ADG1608_RFB_STATE = passedInt;
+      ADG1608_RFB(ADG1608_RFB_STATE);
+      Serial.print("ADG1608_RFB: ");
+      Serial.print(ADG1608_RFB_STATE);
       }
     }
   }
@@ -174,27 +308,38 @@ void updateFlashCount(){
 void runSweep() {
   configAD5933();
   LED(true);
-  AD8130(true);
-  ADG774('A');
+  AD8130(AD8130_STATE);
+  ADG774(ADG774_STATE);
   ADG1608_RC(0);
-  ADG1608_GAIN(1);
-  ADG1608_RFB(1);
+  ADG1608_GAIN(ADG1608_GAIN_STATE);
+  ADG1608_RFB(ADG1608_RFB_STATE);
   delay(500);
   initializeSweep();
 
   // run while the Status register says that the sweep is not complete
   while((readData(Status_D7_to_D0) & 0b111) < 0b100 ) {  // reads Status Register, to see if D2 is less than 1 (i.e. 0), 0 in at D2 in this register ('Status Register') indicates that the frequency sweep is complete
-    // delay(1000); // delay between measurements
+
+
+    ADG774('A');
+    delay(50); // delay between measurements
+    ADG774('B');
+    delay(50); // delay between measurements
+
+
     int dataAvaliable = readData(Status_D7_to_D0) & 0b10; // reads Status Register, uses an and '&' bit wise operator to see if the register is equal to 1 at the D1 bit, this indicates if there is valid real or imaginary data is avaliable
     Current_Frequency = Start_Frequency + i*Increment_Frequency;
     Current_Frequency = Current_Frequency/1000;
     double f = Current_Frequency * 1.0;
 
+    if (Serial.available() > 0) {
+        break;
+    }
+
     if (dataAvaliable == 2) {
 
       if (scanNumberAtFrequency == 1) {
         ADG774('A'); // shifts leads to external lead circuit
-        delay(333); // wait for 1000 ms
+        delay(Sweep_delay); // wait for 1000 ms
 
         readRealandImg();
         x = (double)re * 1.0;
@@ -211,7 +356,7 @@ void runSweep() {
       if (scanNumberAtFrequency == 2) {
         ADG774('B'); // shifts leads to internal calibration circuit
         ADG1608_RC(first_calibration_state); // shifts to R73 (1001 1k resistor)
-        delay(333); // wait for 1000 ms
+        delay(Sweep_delay); // wait for 1000 ms
 
         readRealandImg();
         xccal = (double)re * 1.0;
@@ -222,13 +367,14 @@ void runSweep() {
           scanNumberAtFrequency = 3; // i++;
           dataAvaliable = readData(Status_D7_to_D0)& 0b10;
 
+
           }
         }
 
         if (scanNumberAtFrequency == 3) {
           ADG774('B'); // shifts leads to internal calibration circuit
           ADG1608_RC(second_calibration_state); // shifts to R73 (1001 1k resistor)
-          delay(333); // wait for 10 ms
+          delay(Sweep_delay); // wait for 10 ms
 
           readRealandImg();
           xcal = (double)re * 1.0;
@@ -243,6 +389,7 @@ void runSweep() {
             i++;
             gf++;
             scanNumberAtFrequency = 1;
+
 
             }
           }
