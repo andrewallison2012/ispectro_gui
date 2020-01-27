@@ -380,7 +380,7 @@ void runSweep() {
           scanNumberAtFrequency = 3; // i++;
           dataAvaliable = readData(Status_D7_to_D0)& 0b10;
 
-
+          Serial.print('A');
           }
         }
 

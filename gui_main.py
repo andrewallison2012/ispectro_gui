@@ -7,7 +7,7 @@ import queue as Queue
 import serial
 from PyQt5.QtCore import QThread, QTimer, QEventLoop, pyqtSignal
 
-port_name ="COM4"
+port_name ="/dev/ttyACM0"
 baud_rate = 38400
 
 qtcreator_file  = "ispectro_xml.ui" # Enter file here, this is generated with qt creator or desinger
@@ -207,9 +207,15 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.stop_QPushButton.clicked.connect(self.stop_sweep)
         self.connect_pushButton.clicked.connect(self.connect)
 
-        # self.timer = pg.QtCore.QTimer()
-        # self.timer.start(250)
-        # self.timer.timeout.connect(self.update)
+        self.apply_settings_QPushButton.clicked.connect(self.apply_settings)
+
+
+    def apply_settings(self):
+        self.serial_thread.write_data(f"<START_FREQUENCY,0,{str(self.start_freq_spinBox.value())}> ")
+        self.update_status(f"<START_FREQUENCY,0,{str(self.start_freq_spinBox.value())}> ")
+
+        self.serial_thread.write_data(f"<ADG774,{str(self.flyby_calibration_comboBox.currentIndex())}> ")
+        self.update_status(f"<ADG774,{str(self.flyby_calibration_comboBox.currentIndex())}> ")
 
 
     def write(self, text):  # Handle sys.stdout.write: update display
@@ -222,13 +228,14 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def stop_sweep(self):
         self.serial_thread.write_data('<STOP>')
         self.update_status("Sweep Aborted")
-        self.serial_thread.serial_running = False
 
     def connect(self):
         self.serial_thread = SerialThread(port_name, baud_rate)
         self.update_status("Connected")
         self.serial_thread.start()
         self.serial_thread.my_signal.connect(self.update)
+
+
 
 
     def update_status(self, text):
