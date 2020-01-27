@@ -52,6 +52,10 @@ class SerialThread(QtCore.QThread):
     my_signal = pyqtSignal()
 
     def __init__(self, port_name, buad_rate):
+        """
+
+        :rtype: object
+        """
         QtCore.QThread.__init__(self)
         self.port_name = port_name
         self.buad_rate = buad_rate
@@ -235,8 +239,9 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.serial_thread.start()
         self.serial_thread.my_signal.connect(self.update)
 
-
-
+    def closeEvent(self, event):
+        self.serial_thread.write_data('<ADG774,0>')
+        self.serial_thread.serial_running = False
 
     def update_status(self, text):
         self.bottom_textBrowser.append(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S -- ') +text)
