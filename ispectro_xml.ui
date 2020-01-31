@@ -452,6 +452,9 @@
         </item>
         <item row="0" column="1">
          <widget class="QPushButton" name="apply_settings_QPushButton">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="text">
            <string>Apply Settings</string>
           </property>
@@ -928,6 +931,22 @@
     <hint type="destinationlabel">
      <x>56</x>
      <y>127</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>apply_settings_QPushButton</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>147</x>
+     <y>127</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>97</x>
+     <y>238</y>
     </hint>
    </hints>
   </connection>
