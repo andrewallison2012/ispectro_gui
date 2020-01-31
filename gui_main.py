@@ -6,6 +6,7 @@ import datetime as dt
 import queue as Queue
 import serial
 from PyQt5.QtCore import QThread, QTimer, QEventLoop, pyqtSignal
+import pandas as pd
 
 port_name ="/dev/ttyACM0"
 baud_rate = 38400
@@ -52,10 +53,6 @@ class SerialThread(QtCore.QThread):
     my_signal = pyqtSignal()
 
     def __init__(self, port_name, buad_rate):
-        """
-
-        :rtype: object
-        """
         QtCore.QThread.__init__(self)
         self.port_name = port_name
         self.buad_rate = buad_rate
@@ -123,9 +120,9 @@ class SerialThread(QtCore.QThread):
         magnitude_cal = np.sqrt((real_cal ** 2) + (imaginary_cal ** 2))
 
         if magnitude_cal != 0:
-            gain_factor = (1 / 1) / magnitude_cal
+            gain_factor = (1 / 1000) / magnitude_cal
         else:
-            gain_factor = (1 / 1) / 1
+            gain_factor = (1 / 1000) / 1
 
         if real_unknown != 0:
             magnitude = np.sqrt((real_unknown ** 2) + (imaginary_unknown ** 2))
@@ -142,6 +139,7 @@ class SerialThread(QtCore.QThread):
 
         string_to_print = f'calibrated impedace magnitude: {impedance}\ntheta: {theta}\nz_real: {z_real}\nz_imaginary: {z_imaginary}'
         self.data_set = np.vstack((self.data_set, np.array([z_real,z_imaginary])))
+
         return self.data_set
         QtWidgets.QApplication.processEvents()
 
@@ -215,11 +213,25 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
     def apply_settings(self):
-        self.serial_thread.write_data(f"<START_FREQUENCY,0,{str(self.start_freq_spinBox.value())}> ")
-        self.update_status(f"<START_FREQUENCY,0,{str(self.start_freq_spinBox.value())}> ")
 
-        self.serial_thread.write_data(f"<ADG774,{str(self.flyby_calibration_comboBox.currentIndex())}> ")
-        self.update_status(f"<ADG774,{str(self.flyby_calibration_comboBox.currentIndex())}> ")
+
+        self.serial_thread.write_data(f"<ADG1608_RC,{str(self.flyby_resistor_comboBox.currentIndex())}> ")
+        self.update_status(f"<ADG1608_RC,{str(self.flyby_resistor_comboBox.currentIndex())}> ")
+
+        self.serial_thread.write_data(f"<ADG1608_GAIN,{str(self.gain_resistor_comboBox.currentIndex())}> ")
+        self.update_status(f"<ADG1608_GAIN,{str(self.gain_resistor_comboBox.currentIndex())}> ")
+
+        self.serial_thread.write_data(f"<ADG1608_RFB,{str(self.fbr_comboBox.currentIndex())}> ")
+        self.update_status(f"<ADG1608_RFB,{str(self.fbr_comboBox.currentIndex())}> ")
+
+        # self.serial_thread.write_data(f"<START_FREQUENCY,0,{str(self.start_freq_spinBox.value() * 1000.0)}> ")
+        # self.update_status(f"<START_FREQUENCY,0,{str(self.start_freq_spinBox.value()  * 1000.0)}> ")
+
+        # self.serial_thread.write_data(f"<NUMBER_OF_INCREMENTS,{str(self.number_of_steps_spinBox_4.value())}> ")
+        # self.update_status(f"<NUMBER_OF_INCREMENTS,{str(self.number_of_steps_spinBox_4.value())}> ")
+
+        # self.serial_thread.write_data(f"<ADG774,{str(self.flyby_calibration_comboBox.currentIndex())}> ")
+        # self.update_status(f"<ADG774,{str(self.flyby_calibration_comboBox.currentIndex())}> ")
 
 
     def write(self, text):  # Handle sys.stdout.write: update display
@@ -232,11 +244,16 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def stop_sweep(self):
         self.serial_thread.write_data('<STOP>')
         self.update_status("Sweep Aborted")
+        dataframe = pd.DataFrame(self.serial_thread.np_data)
+        pd.DataFrame.to_csv(dataframe,'tmpData.csv')
+
+
 
     def connect(self):
         self.serial_thread = SerialThread(port_name, baud_rate)
         self.update_status("Connected")
         self.serial_thread.start()
+        self.serial_thread.serial_running = True
         self.serial_thread.my_signal.connect(self.update)
 
     def closeEvent(self, event):
