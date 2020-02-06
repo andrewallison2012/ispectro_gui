@@ -201,6 +201,8 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.temp_graphicsView.showGrid(x=True, y=True)
         self.temp_graphicsView.hideAxis('bottom')
 
+        self.plot2_graphicsView.showGrid(x=True, y=True)
+
         # self.temp_graphicsView.setTitle(title="Internal Device Temperature")
         # self.temp_graphicsView.setLabel('bottom',text= 'Time (s.)')
         self.temp_graphicsView.setLabel('left',text='Temp (C)')
