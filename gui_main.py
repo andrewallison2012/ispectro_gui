@@ -245,9 +245,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.serial_thread.write_data('<STOP>')
         self.update_status("Sweep Aborted")
         dataframe = pd.DataFrame(self.serial_thread.np_data)
-        pd.DataFrame.to_csv(dataframe,'tmpData.csv')
-
-
+        pd.DataFrame.to_csv(dataframe, 'tmpData.csv')
 
     def connect(self):
         self.serial_thread = SerialThread(port_name, baud_rate)
@@ -288,6 +286,14 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         s2 = pg.ScatterPlotItem()
         s2.addPoints(spots2)
         view2.addItem(s2)
+
+        view3 = self.plot2_graphicsView
+        s3 = pg.ScatterPlotItem()
+        s3.addPoints(x = self.serial_thread.np_data[-1:,0], y = self.serial_thread.np_data[-1:,1], brush = (255,0,0), size = 5, symbol = 'o')
+        s3.addPoints(x=self.serial_thread.np_data[-1:, 0], y=self.serial_thread.np_data[-1:, 2],  brush = (0,0,255), size = 5, symbol = 'o')
+        s3.addPoints(x=self.serial_thread.np_data[-1:, 0], y=self.serial_thread.np_data[-1:, 3],  brush = (255,0,0), size = 5, symbol = '+')
+        s3.addPoints(x=self.serial_thread.np_data[-1:, 0], y=self.serial_thread.np_data[-1:, 4],  brush = (0,0,255), size = 5, symbol = '+')
+        view3.addItem(s3)
 
         QtWidgets.QApplication.processEvents()
 

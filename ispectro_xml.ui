@@ -27,20 +27,7 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_3">
-    <item row="1" column="1">
-     <widget class="PlotWidget" name="plot1_graphicsView">
-      <property name="minimumSize">
-       <size>
-        <width>849</width>
-        <height>511</height>
-       </size>
-      </property>
-      <property name="toolTipDuration">
-       <number>-2</number>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="0">
+    <item row="2" column="0">
      <widget class="QTabWidget" name="tabWidget">
       <property name="maximumSize">
        <size>
@@ -662,16 +649,6 @@
       </widget>
      </widget>
     </item>
-    <item row="2" column="0" colspan="3">
-     <widget class="QTextBrowser" name="bottom_textBrowser">
-      <property name="maximumSize">
-       <size>
-        <width>16777215</width>
-        <height>16777215</height>
-       </size>
-      </property>
-     </widget>
-    </item>
     <item row="0" column="0">
      <widget class="QGroupBox" name="groupBox">
       <property name="title">
@@ -773,6 +750,84 @@
        </item>
       </layout>
      </widget>
+    </item>
+    <item row="3" column="0" colspan="7">
+     <widget class="QTextBrowser" name="bottom_textBrowser">
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>16777215</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <item>
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="PlotWidget" name="plot1_graphicsView">
+        <property name="minimumSize">
+         <size>
+          <width>500</width>
+          <height>500</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>500</width>
+          <height>1500</height>
+         </size>
+        </property>
+        <property name="toolTipDuration">
+         <number>-2</number>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="PlotWidget" name="plot2_graphicsView">
+        <property name="minimumSize">
+         <size>
+          <width>500</width>
+          <height>500</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>500</width>
+          <height>1500</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QTableView" name="tableView_2"/>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
     </item>
     <item row="0" column="1">
      <widget class="PlotWidget" name="temp_graphicsView">
