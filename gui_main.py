@@ -54,6 +54,7 @@ class SerialThread(QtCore.QThread):
 
     def __init__(self, port_name, buad_rate):
         QtCore.QThread.__init__(self)
+        np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
         self.port_name = port_name
         self.buad_rate = buad_rate
         self.transmit = Queue.Queue()
@@ -165,7 +166,7 @@ class SerialThread(QtCore.QThread):
             line = np.frombuffer(bytes(self.raw_data), dtype='<f4')
 
             last_line = self.np_data[-1]
-            if (np.array_equal(last_line, line) == False) and (line[8] == 1.0):
+            if (np.array_equal(last_line, line) == False)  and (line[8] == 1.0):
                 self.np_data = np.vstack((self.np_data, line))
                 print(line)
                 self.data_processing(line[1], line[2], line[3], line[4])
@@ -200,8 +201,10 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.temp_graphicsView.showGrid(x=True, y=True)
         self.temp_graphicsView.hideAxis('bottom')
-
+        self.plot2_graphicsView.setTitle(title="Raw Data")
         self.plot2_graphicsView.showGrid(x=True, y=True)
+        self.plot2_graphicsView.setLabel('left',text= 'Value')
+        self.plot2_graphicsView.setLabel('bottom',text='Data Index')
 
         # self.temp_graphicsView.setTitle(title="Internal Device Temperature")
         # self.temp_graphicsView.setLabel('bottom',text= 'Time (s.)')
@@ -226,11 +229,20 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.serial_thread.write_data(f"<ADG1608_RFB,{str(self.fbr_comboBox.currentIndex())}> ")
         self.update_status(f"<ADG1608_RFB,{str(self.fbr_comboBox.currentIndex())}> ")
 
+        self.serial_thread.write_data(f"<NUMBER_OF_INCREMENTS,{str(self.number_of_steps_spinBox_4.value())}> ")
+        self.update_status(f"<NUMBER_OF_INCREMENTS,{str(self.number_of_steps_spinBox_4.value())}> ")
+
+        self.serial_thread.write_data(f"<INCREMENT_FREQUENCY,0 , {str(self.step_size_spinBox.value() * 1000.0)}> ")
+        self.update_status(f"<INCREMENT_FREQUENCY,0 , {str(self.step_size_spinBox.value()  * 1000.0)}> ")
+
+        self.serial_thread.write_data(f"<SWEEP_DELAY,{str(self.settling_time_spinBox.value())}> ")
+        self.update_status(f"<SWEEP_DELAY,{str(self.settling_time_spinBox.value())}> ")
+
+        self.serial_thread.write_data(f"<PGA,{str(self.pga_comboBox.currentIndex())}> ")
+        self.update_status(f"<PGA,{str(self.pga_comboBox.currentIndex())}> ")
+
         # self.serial_thread.write_data(f"<START_FREQUENCY,0,{str(self.start_freq_spinBox.value() * 1000.0)}> ")
         # self.update_status(f"<START_FREQUENCY,0,{str(self.start_freq_spinBox.value()  * 1000.0)}> ")
-
-        # self.serial_thread.write_data(f"<NUMBER_OF_INCREMENTS,{str(self.number_of_steps_spinBox_4.value())}> ")
-        # self.update_status(f"<NUMBER_OF_INCREMENTS,{str(self.number_of_steps_spinBox_4.value())}> ")
 
         # self.serial_thread.write_data(f"<ADG774,{str(self.flyby_calibration_comboBox.currentIndex())}> ")
         # self.update_status(f"<ADG774,{str(self.flyby_calibration_comboBox.currentIndex())}> ")

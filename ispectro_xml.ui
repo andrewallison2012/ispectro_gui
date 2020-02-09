@@ -312,13 +312,16 @@
             <item row="4" column="1">
              <widget class="QSpinBox" name="settling_time_spinBox">
               <property name="suffix">
-               <string> sec.</string>
+               <string> ms</string>
+              </property>
+              <property name="minimum">
+               <number>100</number>
               </property>
               <property name="maximum">
-               <number>5</number>
+               <number>9999</number>
               </property>
               <property name="value">
-               <number>1</number>
+               <number>333</number>
               </property>
              </widget>
             </item>

@@ -86,10 +86,13 @@ char ADG774_STATE = 'A';
 int ADG1608_RC_STATE = 0;
 int ADG1608_GAIN_STATE = 1;
 int ADG1608_RFB_STATE = 1;
+int PGA_STATE = 1;
 
 int first_calibration_state = 4;
 int second_calibration_state = 1;
 int flash_delay = 1000;
+
+
 
 
 
@@ -201,7 +204,7 @@ void variableUpdateFuntion() {
     }
   if (strcmp(charactersFromPC,"STOP") == 0) { // strcmp() compares array of charactersFromPC to "LED2" and returns number of differnt characters if 0 then they match and expression returns true
     if (newInput) {
-
+      setAD5933();
         }
       }
   if (strcmp(charactersFromPC,"LEDOFF") == 0) { // strcmp() compares array of charactersFromPC to "LED2" and returns number of differnt characters if 0 then they match and expression returns true
@@ -254,6 +257,28 @@ void variableUpdateFuntion() {
       Number_of_Increments = passedInt;
       Serial.print("Number_of_Increments set to: ");
       Serial.print(Number_of_Increments);
+      }
+    }
+   if (strcmp(charactersFromPC,"SWEEP_DELAY") == 0) { // strcmp() compares array of charactersFromPC to "LED2" and returns number of differnt characters if 0 then they match and expression returns true
+    if (newInput) {
+      Sweep_delay = passedInt;
+      Serial.print("Sweep_delay set to: ");
+      Serial.print(Sweep_delay);
+      }
+    }
+   if (strcmp(charactersFromPC,"PGA") == 0) { // strcmp() compares array of charactersFromPC to "LED2" and returns number of differnt characters if 0 then they match and expression returns true
+    if (newInput) {
+      if (passedInt == 0) {
+        writeData(Control_D15_to_D8,0b1); // D8 PGA gain; 1 = ×1
+        PGA_STATE = 1;
+      }
+      if (passedInt == 1) {
+        writeData(Control_D15_to_D8,0b0); // D8 PGA gain; 0 = ×5
+        PGA_STATE = 5;
+      }
+        AD8130(AD8130_STATE);
+        Serial.print("PGA: ");
+        Serial.print(PGA_STATE);
       }
     }
    if (strcmp(charactersFromPC,"AD8130") == 0) { // strcmp() compares array of charactersFromPC to "LED2" and returns number of differnt characters if 0 then they match and expression returns true
@@ -333,10 +358,6 @@ void runSweep() {
   while((readData(Status_D7_to_D0) & 0b111) < 0b100 ) {  // reads Status Register, to see if D2 is less than 1 (i.e. 0), 0 in at D2 in this register ('Status Register') indicates that the frequency sweep is complete
 
 
-    ADG774('A');
-    delay(50); // delay between measurements
-    ADG774('B');
-    delay(50); // delay between measurements
 
 
     int dataAvaliable = readData(Status_D7_to_D0) & 0b10; // reads Status Register, uses an and '&' bit wise operator to see if the register is equal to 1 at the D1 bit, this indicates if there is valid real or imaginary data is avaliable
@@ -380,7 +401,7 @@ void runSweep() {
           scanNumberAtFrequency = 3; // i++;
           dataAvaliable = readData(Status_D7_to_D0)& 0b10;
 
-          Serial.print('A');
+
           }
         }
 
@@ -396,6 +417,8 @@ void runSweep() {
           t = (double)t * 1.0;
 
           sendToPC(&f, &x, &y,  &xcal, &ycal, &xccal, &yccal, &t, &sweepUnderWay);
+
+
 
           if((readData(Status_D7_to_D0) & 0b111) < 0b100){
             writeData(Control_D15_to_D8,(readData(Control_D15_to_D8) & 0b111) | 0b110000); // increments to next frequency
