@@ -14,40 +14,6 @@ baud_rate = 38400
 qtcreator_file  = "ispectro_xml.ui" # Enter file here, this is generated with qt creator or desinger
 Ui_MainWindow, QtBaseClass = uic.loadUiType(qtcreator_file)
 
-# class SerialGraphThread(QtCore.QThread):
-#     signal = pyqtSignal(object)
-#
-#     def __init__(self, connection_object, plot1_graphicsView, *args, **kwargs):
-#         QtCore.QThread.__init__(self, *args, **kwargs)
-#         self.connection_object = connection_object
-#         self.plot1_graphicsView = plot1_graphicsView
-#         self.dataCollectionTimer = QTimer()
-#         self.dataCollectionTimer.moveToThread(self)
-#         self.dataCollectionTimer.timeout.connect(self.update_data)
-#         self.running = True
-
-    # def update_data(self):
-    #     i =+ 1
-    #     spots3 = []
-    #     if self.connection_object == (2,7):
-    #     # self.plot1_graphicsView.plot().setData(x=self.arduino_connection.np_data[1:,0],y=self.arduino_connection.np_data[1:,7], pen=None, symbol='x')
-    #         for i in range(np.alen(self.connection_object[1:,0])):
-    #             for j in range(np.alen(self.connection_object[1:,6])):
-    #                 spots3.append({'pos': (self.connection_object[-1:,1], self.connection_object[-1,2]),
-    #                                'brush': pg.intColor(i, 120)})
-    #
-    #     view = self.plot1_graphicsView.plot()
-    #     s3 = pg.ScatterPlotItem()  ## Set pxMode=False to allow spots to transform with the view
-    #     s3.addPoints(spots3)
-    #     view.addItem(s3)
-    #
-    #     print('raan')
-    #
-    # def run(self):
-    #     while self.running:
-    #         self.dataCollectionTimer.start(1000)
-    #         loop = QEventLoop()
-    #         loop.exec_()
 
 class SerialThread(QtCore.QThread):
     my_signal = pyqtSignal()
@@ -173,7 +139,6 @@ class SerialThread(QtCore.QThread):
                 self.temp_processing(line[0], line[7])
                 self.my_signal.emit()
 
-
         if self.serial_connection:
             self.serial_connection.close()
             self.serial_connection = None
@@ -204,7 +169,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.plot2_graphicsView.setTitle(title="Raw Data")
         self.plot2_graphicsView.showGrid(x=True, y=True)
         self.plot2_graphicsView.setLabel('left',text= 'Value')
-        self.plot2_graphicsView.setLabel('bottom',text='Data Index')
+        self.plot2_graphicsView.setLabel('bottom',text='Frequency (Hz)')
 
         # self.temp_graphicsView.setTitle(title="Internal Device Temperature")
         # self.temp_graphicsView.setLabel('bottom',text= 'Time (s.)')
@@ -216,10 +181,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.apply_settings_QPushButton.clicked.connect(self.apply_settings)
 
-
     def apply_settings(self):
-
-
         self.serial_thread.write_data(f"<ADG1608_RC,{str(self.flyby_resistor_comboBox.currentIndex())}> ")
         self.update_status(f"<ADG1608_RC,{str(self.flyby_resistor_comboBox.currentIndex())}> ")
 
@@ -284,12 +246,11 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         spots3 = []
         spots2 = []
 
-        for i in range(np.alen(self.serial_thread.data_set[1:,])):
-            spots3.append({'pos': (self.serial_thread.data_set[-1:,0], self.serial_thread.data_set[-1,1]),
-                           'brush': pg.intColor(i, 120, alpha = 20), 'pen': pg.mkPen(None), 'size': 3})
-            spots2.append({'pos': (self.serial_thread.temp_data[-1:,0], self.serial_thread.temp_data[-1,1]),
-                           'brush': pg.intColor(i, 120, alpha = 20), 'pen': pg.mkPen(None), 'size': 3})
-
+        for i in range(np.alen(self.serial_thread.data_set[1:, ])):
+            spots3.append({'pos': (self.serial_thread.data_set[-1:, 0], self.serial_thread.data_set[-1, 1]),
+                           'brush': pg.intColor(self.serial_thread.np_data[-1:, 0]/1000, 120, alpha=20), 'pen': pg.mkPen(None), 'size': 3})
+            spots2.append({'pos': (self.serial_thread.temp_data[-1:, 0], self.serial_thread.temp_data[-1, 1]),
+                           'brush': pg.intColor(self.serial_thread.np_data[-1:, 0]/1000, 120, alpha=20), 'pen': pg.mkPen(None), 'size': 3})
 
         view = self.plot1_graphicsView
         s3 = pg.ScatterPlotItem()  ## Set pxMode=False to allow spots to transform with the view
@@ -303,10 +264,10 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         view3 = self.plot2_graphicsView
         s3 = pg.ScatterPlotItem()
-        s3.addPoints(x = self.serial_thread.np_data[-1:,0], y = self.serial_thread.np_data[-1:,1], brush = (255,0,0), size = 5, symbol = 'o')
-        s3.addPoints(x=self.serial_thread.np_data[-1:, 0], y=self.serial_thread.np_data[-1:, 2],  brush = (0,0,255), size = 5, symbol = 'o')
-        s3.addPoints(x=self.serial_thread.np_data[-1:, 0], y=self.serial_thread.np_data[-1:, 3],  brush = (255,0,0), size = 5, symbol = '+')
-        s3.addPoints(x=self.serial_thread.np_data[-1:, 0], y=self.serial_thread.np_data[-1:, 4],  brush = (0,0,255), size = 5, symbol = '+')
+        s3.addPoints(x=self.serial_thread.np_data[-1:, 0], y=self.serial_thread.np_data[-1:, 1], brush=(255, 0, 0), size=5, symbol='o')
+        s3.addPoints(x=self.serial_thread.np_data[-1:, 0], y=self.serial_thread.np_data[-1:, 2], brush=(0, 0, 255), size=5, symbol='o')
+        s3.addPoints(x=self.serial_thread.np_data[-1:, 0], y=self.serial_thread.np_data[-1:, 3], brush=(255, 0, 0), size=5, symbol='+')
+        s3.addPoints(x=self.serial_thread.np_data[-1:, 0], y=self.serial_thread.np_data[-1:, 4], brush=(0, 0, 255), size=5, symbol='+')
         view3.addItem(s3)
 
         QtWidgets.QApplication.processEvents()

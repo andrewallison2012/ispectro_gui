@@ -63,7 +63,7 @@ int i=0;
 int gf=1;
 
 double sweepUnderWay = 0.0;
-double f;
+
 double x;
 double y;
 
@@ -92,6 +92,7 @@ int first_calibration_state = 4;
 int second_calibration_state = 1;
 int flash_delay = 1000;
 
+double f = Start_Frequency;
 
 
 
@@ -357,20 +358,13 @@ void runSweep() {
   // run while the Status register says that the sweep is not complete
   while((readData(Status_D7_to_D0) & 0b111) < 0b100 ) {  // reads Status Register, to see if D2 is less than 1 (i.e. 0), 0 in at D2 in this register ('Status Register') indicates that the frequency sweep is complete
 
-
-
-
     int dataAvaliable = readData(Status_D7_to_D0) & 0b10; // reads Status Register, uses an and '&' bit wise operator to see if the register is equal to 1 at the D1 bit, this indicates if there is valid real or imaginary data is avaliable
-    Current_Frequency = Start_Frequency + i*Increment_Frequency;
-    Current_Frequency = Current_Frequency/1000;
-    double f = Current_Frequency * 1.0;
 
     if (Serial.available() > 0) {
         break;
     }
 
     if (dataAvaliable == 2) {
-
       if (scanNumberAtFrequency == 1) {
         ADG774('A'); // shifts leads to external lead circuit
         delay(Sweep_delay); // wait for 1000 ms
@@ -383,7 +377,6 @@ void runSweep() {
             writeData(Control_D15_to_D8,(readData(Control_D15_to_D8) & 0b111) | 0b1000000); // repeats at current frequency
             scanNumberAtFrequency = 2; // i++;
             dataAvaliable = readData(Status_D7_to_D0)& 0b10;
-
             }
           }
 
@@ -400,8 +393,6 @@ void runSweep() {
           writeData(Control_D15_to_D8,(readData(Control_D15_to_D8) & 0b111) | 0b1000000); // repeats at current frequency
           scanNumberAtFrequency = 3; // i++;
           dataAvaliable = readData(Status_D7_to_D0)& 0b10;
-
-
           }
         }
 
@@ -415,27 +406,19 @@ void runSweep() {
           ycal = (double)img * 1.0;
           t = measureTemperatureDouble();
           t = (double)t * 1.0;
-
           sendToPC(&f, &x, &y,  &xcal, &ycal, &xccal, &yccal, &t, &sweepUnderWay);
-
-
 
           if((readData(Status_D7_to_D0) & 0b111) < 0b100){
             writeData(Control_D15_to_D8,(readData(Control_D15_to_D8) & 0b111) | 0b110000); // increments to next frequency
             i++;
             gf++;
             scanNumberAtFrequency = 1;
-
-
+            f = f + Increment_Frequency;
             }
           }
-
         } // close dataAvaliable if statement
-
     } // close while
-
   endSweep();
-
 } // close runSweep() function
 
 
