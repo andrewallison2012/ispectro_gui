@@ -13,6 +13,7 @@ baud_rate = 38400
 
 qtcreator_file  = "ispectro_xml.ui" # Enter file here, this is generated with qt creator or desinger
 Ui_MainWindow, QtBaseClass = uic.loadUiType(qtcreator_file)
+pg.setConfigOptions(antialias=True)
 
 
 class SerialThread(QtCore.QThread):
@@ -181,6 +182,11 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.apply_settings_QPushButton.clicked.connect(self.apply_settings)
 
+        self.input_plot.setTitle(title='Input Signal')
+        self.output_plot.setTitle(title='Output Signal')
+
+
+
     def apply_settings(self):
         self.serial_thread.write_data(f"<ADG1608_RC,{str(self.flyby_resistor_comboBox.currentIndex())}> ")
         self.update_status(f"<ADG1608_RC,{str(self.flyby_resistor_comboBox.currentIndex())}> ")
@@ -242,15 +248,18 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def update(self):
         global ptr1, spots3
+
+        self.input_plot.clear()
+
         i =+ 1
         spots3 = []
         spots2 = []
 
         for i in range(np.alen(self.serial_thread.data_set[1:, ])):
             spots3.append({'pos': (self.serial_thread.data_set[-1:, 0], self.serial_thread.data_set[-1, 1]),
-                           'brush': pg.intColor(self.serial_thread.np_data[-1:, 0]/1000, 120, alpha=20), 'pen': pg.mkPen(None), 'size': 3})
+                           'brush': pg.intColor(self.serial_thread.np_data[-1:, 0]/1000, 120), 'pen': pg.mkPen(None), 'size': 3})
             spots2.append({'pos': (self.serial_thread.temp_data[-1:, 0], self.serial_thread.temp_data[-1, 1]),
-                           'brush': pg.intColor(self.serial_thread.np_data[-1:, 0]/1000, 120, alpha=20), 'pen': pg.mkPen(None), 'size': 3})
+                           'brush': pg.intColor(self.serial_thread.np_data[-1:, 0]/1000, 120), 'pen': pg.mkPen(None), 'size': 3})
 
         view = self.plot1_graphicsView
         s3 = pg.ScatterPlotItem()  ## Set pxMode=False to allow spots to transform with the view
@@ -269,6 +278,15 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         s3.addPoints(x=self.serial_thread.np_data[-1:, 0], y=self.serial_thread.np_data[-1:, 3], brush=(255, 0, 0), size=5, symbol='+')
         s3.addPoints(x=self.serial_thread.np_data[-1:, 0], y=self.serial_thread.np_data[-1:, 4], brush=(0, 0, 255), size=5, symbol='+')
         view3.addItem(s3)
+
+
+        cycles_per_nano_second = ((self.serial_thread.np_data[-1:, 0])/1000)
+        cycles_per_nano_second_radians = cycles_per_nano_second * np.pi * 2
+        linspace_data = np.linspace(0, cycles_per_nano_second_radians, 1000)
+        sin_data = np.sin(linspace_data)
+        self.input_plot.plot(sin_data.flatten())
+
+
 
         QtWidgets.QApplication.processEvents()
 
