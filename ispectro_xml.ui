@@ -29,7 +29,7 @@
    <property name="statusTip">
     <string>Hover Over Things to See Info Here</string>
    </property>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -776,9 +776,6 @@
         <layout class="QHBoxLayout" name="horizontalLayout_4">
          <item>
           <widget class="PlotWidget" name="input_plot"/>
-         </item>
-         <item>
-          <widget class="PlotWidget" name="output_plot"/>
          </item>
         </layout>
        </item>

@@ -182,8 +182,8 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.apply_settings_QPushButton.clicked.connect(self.apply_settings)
 
-        self.input_plot.setTitle(title='Input Signal')
-        self.output_plot.setTitle(title='Output Signal')
+        self.input_plot.setTitle(title='Excitation vs Response Signal')
+
 
 
 
