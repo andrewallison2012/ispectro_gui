@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1245</width>
-    <height>873</height>
+    <width>1762</width>
+    <height>877</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -34,7 +34,7 @@
      <rect>
       <x>20</x>
       <y>0</y>
-      <width>1220</width>
+      <width>1726</width>
       <height>821</height>
      </rect>
     </property>
@@ -816,6 +816,22 @@
            </property>
           </widget>
          </item>
+         <item>
+          <widget class="PlotWidget" name="raw_plot">
+           <property name="minimumSize">
+            <size>
+             <width>500</width>
+             <height>400</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>16777215</height>
+            </size>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>
@@ -856,13 +872,62 @@
           </widget>
          </item>
          <item>
-          <widget class="QTableView" name="tableView_2">
-           <property name="maximumSize">
-            <size>
-             <width>16777215</width>
-             <height>16777215</height>
-            </size>
-           </property>
+          <widget class="QTableWidget" name="data_table">
+           <row>
+            <property name="text">
+             <string>new1</string>
+            </property>
+           </row>
+           <column>
+            <property name="text">
+             <string>frequency</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Lead R</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Lead I</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Cal1 R</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Cal1 I</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Cal2 R</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Cal2 I</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Cal3 R</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Cal3 I</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Status</string>
+            </property>
+           </column>
           </widget>
          </item>
         </layout>
@@ -877,7 +942,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1245</width>
+     <width>1762</width>
      <height>26</height>
     </rect>
    </property>

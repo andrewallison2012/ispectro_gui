@@ -183,6 +183,14 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.apply_settings_QPushButton.clicked.connect(self.apply_settings)
 
         self.input_plot.setTitle(title='Excitation vs Response Signal')
+        self.input_plot.setLabel('left',text= 'V')
+        self.input_plot.setLabel('bottom',text='ns')
+
+
+        self.raw_plot.setTitle(title="Raw Data")
+        self.raw_plot.showGrid(x=True, y=True)
+        self.raw_plot.setLabel('left',text= 'I')
+        self.raw_plot.setLabel('bottom',text='R')
 
 
 
@@ -265,29 +273,37 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         s3 = pg.ScatterPlotItem()  ## Set pxMode=False to allow spots to transform with the view
         s3.addPoints(spots3)
         view.addItem(s3)
+        QtWidgets.QApplication.processEvents()
 
         view2 = self.temp_graphicsView
         s2 = pg.ScatterPlotItem()
         s2.addPoints(spots2)
         view2.addItem(s2)
+        QtWidgets.QApplication.processEvents()
 
         view3 = self.plot2_graphicsView
         s3 = pg.ScatterPlotItem()
-        s3.addPoints(x=self.serial_thread.np_data[-1:, 0], y=self.serial_thread.np_data[-1:, 1], brush=(255, 0, 0), size=5, symbol='o')
-        s3.addPoints(x=self.serial_thread.np_data[-1:, 0], y=self.serial_thread.np_data[-1:, 2], brush=(0, 0, 255), size=5, symbol='o')
-        s3.addPoints(x=self.serial_thread.np_data[-1:, 0], y=self.serial_thread.np_data[-1:, 3], brush=(255, 0, 0), size=5, symbol='+')
-        s3.addPoints(x=self.serial_thread.np_data[-1:, 0], y=self.serial_thread.np_data[-1:, 4], brush=(0, 0, 255), size=5, symbol='+')
+        s3.addPoints(x=self.serial_thread.np_data[-1:, 0], y=self.serial_thread.np_data[-1:, 1], brush=(255, 0, 0), size=5, symbol='o', pen=(0,0,0,0))
+        s3.addPoints(x=self.serial_thread.np_data[-1:, 0], y=self.serial_thread.np_data[-1:, 2], brush=(0, 0, 255), size=5, symbol='o', pen=(0,0,0,0))
+        s3.addPoints(x=self.serial_thread.np_data[-1:, 0], y=self.serial_thread.np_data[-1:, 3], brush=(255, 0, 0), size=5, symbol='+', pen=(255,255,255,255))
+        s3.addPoints(x=self.serial_thread.np_data[-1:, 0], y=self.serial_thread.np_data[-1:, 4], brush=(0, 0, 255), size=5, symbol='+', pen=(255,255,255,255))
         view3.addItem(s3)
+        QtWidgets.QApplication.processEvents()
+
+        view4 = self.raw_plot
+        s4 = pg.ScatterPlotItem()
+        s4.addPoints(x=self.serial_thread.np_data[-1:, 1], y=self.serial_thread.np_data[-1:, 2], brush=(255, 255, 0), size=5, symbol='o',pen=(0,0,0,0))
+        s4.addPoints(x=self.serial_thread.np_data[-1:, 3], y=self.serial_thread.np_data[-1:, 4], brush=(255, 0, 0), size=5, symbol='o', pen=(0,0,0,0))
+        s4.addPoints(x=self.serial_thread.np_data[-1:, 5], y=self.serial_thread.np_data[-1:, 6], brush=(0, 0, 255), size=5, symbol='o', pen=(0,0,0,0))
+        view4.addItem(s4)
+        QtWidgets.QApplication.processEvents()
 
 
         cycles_per_nano_second = ((self.serial_thread.np_data[-1:, 0])/1000)
         cycles_per_nano_second_radians = cycles_per_nano_second * np.pi * 2
         linspace_data = np.linspace(0, cycles_per_nano_second_radians, 1000)
         sin_data = np.sin(linspace_data)
-        self.input_plot.plot(sin_data.flatten())
-
-
-
+        self.input_plot.plot(sin_data.flatten(), pen=(255,255,0))
         QtWidgets.QApplication.processEvents()
 
 if __name__ == "__main__":
