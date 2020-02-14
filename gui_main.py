@@ -7,6 +7,7 @@ import queue as Queue
 import serial
 from PyQt5.QtCore import QThread, QTimer, QEventLoop, pyqtSignal
 import pandas as pd
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 port_name ="/dev/ttyACM0"
 baud_rate = 38400
@@ -21,7 +22,7 @@ class SerialThread(QtCore.QThread):
 
     def __init__(self, port_name, buad_rate):
         QtCore.QThread.__init__(self)
-        np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
+        np.set_printoptions(formatter={'float': lambda x: "{0:0.1f}".format(x)})
         self.port_name = port_name
         self.buad_rate = buad_rate
         self.transmit = Queue.Queue()
@@ -135,7 +136,7 @@ class SerialThread(QtCore.QThread):
             last_line = self.np_data[-1]
             if (np.array_equal(last_line, line) == False)  and (line[8] == 1.0):
                 self.np_data = np.vstack((self.np_data, line))
-                print(line)
+                # print(line)
                 self.data_processing(line[1], line[2], line[3], line[4])
                 self.temp_processing(line[0], line[7])
                 self.my_signal.emit()
@@ -269,6 +270,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             spots2.append({'pos': (self.serial_thread.temp_data[-1:, 0], self.serial_thread.temp_data[-1, 1]),
                            'brush': pg.intColor(self.serial_thread.np_data[-1:, 0]/1000, 120), 'pen': pg.mkPen(None), 'size': 3})
 
+
         view = self.plot1_graphicsView
         s3 = pg.ScatterPlotItem()  ## Set pxMode=False to allow spots to transform with the view
         s3.addPoints(spots3)
@@ -304,6 +306,9 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         linspace_data = np.linspace(0, cycles_per_nano_second_radians, 1000)
         sin_data = np.sin(linspace_data)
         self.input_plot.plot(sin_data.flatten(), pen=(255,255,0))
+        QtWidgets.QApplication.processEvents()
+
+        self.bottom_textBrowser_2.append(np.array2string(self.serial_thread.np_data[-1,:]))
         QtWidgets.QApplication.processEvents()
 
 if __name__ == "__main__":

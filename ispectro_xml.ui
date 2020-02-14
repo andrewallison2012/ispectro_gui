@@ -872,62 +872,13 @@
           </widget>
          </item>
          <item>
-          <widget class="QTableWidget" name="data_table">
-           <row>
-            <property name="text">
-             <string>new1</string>
-            </property>
-           </row>
-           <column>
-            <property name="text">
-             <string>frequency</string>
-            </property>
-           </column>
-           <column>
-            <property name="text">
-             <string>Lead R</string>
-            </property>
-           </column>
-           <column>
-            <property name="text">
-             <string>Lead I</string>
-            </property>
-           </column>
-           <column>
-            <property name="text">
-             <string>Cal1 R</string>
-            </property>
-           </column>
-           <column>
-            <property name="text">
-             <string>Cal1 I</string>
-            </property>
-           </column>
-           <column>
-            <property name="text">
-             <string>Cal2 R</string>
-            </property>
-           </column>
-           <column>
-            <property name="text">
-             <string>Cal2 I</string>
-            </property>
-           </column>
-           <column>
-            <property name="text">
-             <string>Cal3 R</string>
-            </property>
-           </column>
-           <column>
-            <property name="text">
-             <string>Cal3 I</string>
-            </property>
-           </column>
-           <column>
-            <property name="text">
-             <string>Status</string>
-            </property>
-           </column>
+          <widget class="QTextBrowser" name="bottom_textBrowser_2">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>16777215</height>
+            </size>
+           </property>
           </widget>
          </item>
         </layout>
